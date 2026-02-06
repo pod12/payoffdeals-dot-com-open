@@ -1,4 +1,4 @@
-⚖️ Universal Software Use & Legal Disclaimer
+Universal Software Use & Legal Disclaimer
 
 Applicable to all projects, tools, and libraries released under payoffdeals.
 
@@ -18,7 +18,9 @@ No Warranty: In accordance with standard open-source practices, this software is
 
 Liability Limitation: The developers and contributors shall not be held liable for any damages, data loss, or service disruptions arising from the use or inability to use this software.
 
-3. Compliance & Governance
+
+Compliance & Governance
+
 User Responsibility: Users are solely responsible for ensuring that their implementation of this software complies with all applicable local and international laws (including but not limited to GDPR, CCPA, and export control laws).
 
 Licensing: Use of this software is governed by the specific license file included in the repository (e.g., MIT, Apache 2.0). Please refer to the LICENSE file for details on permissions and limitations.
