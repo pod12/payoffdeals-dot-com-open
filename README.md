@@ -1,4 +1,5 @@
 ⚖️ Responsible Use & Legal Disclaimer
+
 PayOffFP is an Entropy-Aggregation system designed strictly for security research, bot mitigation, and fraud prevention.
 
 Ethical Use: This software should not be used for invasive cross-site tracking or to violate user privacy. It is intended to distinguish between automated "headless" browsers and legitimate human users to protect digital infrastructure.
