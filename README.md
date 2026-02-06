@@ -2,14 +2,16 @@
 
 Applicable to all projects, tools, and libraries released under payoffdeals.
 
-1. Purpose & Ethical Scope
+Purpose & Ethical Scope
+
 The software provided in this repository is designed to solve specific technical challenges, ranging from security and integrity to productivity and data processing.
 
 Intended Use: Users are expected to utilize these tools for their designed purpose—improving software ecosystems, protecting digital infrastructure, or enhancing user experiences.
 
 Ethical Constraints: This software must not be repurposed for malicious activities, including but not limited to: unauthorized data harvesting, privacy violations, or the facilitation of illegal acts.
 
-2. "As-Is" Provision & Liability
+"As-Is" Provision & Liability
+
 Heuristics & Logic: Many of our tools (such as PayOffFP) rely on heuristic models and probabilistic logic. While we strive for high precision, outputs should be treated as estimations and not absolute certainties.
 
 No Warranty: In accordance with standard open-source practices, this software is provided "as is." We do not guarantee that the software will be error-free, uninterrupted, or meet specific performance requirements.
