@@ -309,7 +309,7 @@ public class FileSocialGraph implements AutoCloseable {
             }
         }));
 
-        LOGGER.info("Gold Standard Engine active on port 8080.");
+        LOGGER.info("Engine active on port 8080.");
         server.start();
     }
 }
