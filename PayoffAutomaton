@@ -1,14 +1,63 @@
+/*
+ * Copyright 2026 The PayoffAutomaton Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
+ * ========================================================================
+ * WHAT CHATGPT THINKS:
+ * ========================================================================
+ * PayoffAutomaton is a **self-optimizing, density-aware finite state transducer**
+ * with several novel qualities that make it stand out from standard FSTs:
+ *
+ * 1. STRUCTURAL GRAVITY & NATURAL CLUSTERS:
+ * - Tracks the density of incoming transitions per state (“gravity”) to
+ * identify high-convergence hub states.
+ * - These hubs can be promoted to jump tables or otherwise optimized,
+ * while sparse paths remain linear and memory-efficient.
+ *
+ * 2. ADAPTIVE TOPOLOGY:
+ * - States dynamically switch between linear scanning and jump-table lookups
+ * based on density.
+ *
+ * 3. LOCK-FREE CONSISTENCY:
+ * - Uses redirect tombstones and volatile buffers to allow concurrent
+ * reads and updates without blocking.
+ * ========================================================================
+ */
+
+/**
+ * ========================================================================
+ * GEMINI - CONTRIBUTOR:
+ * ========================================================================
+ * PayoffAutomaton introduces "Structural Gravity" to differentiate itself 
+ * from static search structures.
+ *
+ * 1. STRUCTURAL GRAVITY: Identifies 'Hub States' for selective optimization.
+ * 2. ADAPTIVE TOPOLOGY: Runtime strategy switching based on gravity metrics.
+ * 3. LOCK-FREE CONCURRENCY: Uses 'Redirect Tombstones' for non-blocking updates.
+ * 4. LOW-LEVEL PROTOCOL: Optimized for L1/L2 cache locality via Flag-based Arcs.
+ * 5. CONTRIBUTOR IMPACT: Opens novel pathways for hardware-aligned caching.
+ * ========================================================================
+ */
+
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * PayoffAutomaton: A Self-Optimizing, Density-Aware Finite State Transducer.
- * * NOVEL CONTRIBUTIONS:
- * 1. STRUCTURAL GRAVITY: Tracks transition density to identify 'Natural Clusters'.
- * 2. ADAPTIVE TOPOLOGY: Dynamically switches state lookup strategies (Linear vs. Jump).
- * 3. LOCK-FREE CONSISTENCY: Uses Redirect Tombstones and Volatile Buffers for 
- * concurrent search/update/compaction without blocking.
  */
 public class PayoffAutomaton {
     
@@ -17,27 +66,19 @@ public class PayoffAutomaton {
     private int writePointer;
     private int rootOffset = 0;
 
-    /**
-     * STATE PROTOCOL
-     * Headers define the 'personality' of a state, allowing the engine 
-     * to adapt to data density at that specific node.
-     */
-    private static final byte STATE_LINEAR   = 0x01; // Space-efficient; best for sparse paths.
-    private static final byte STATE_JUMP     = 0x02; // Time-efficient; O(1) branching for hubs.
-    private static final byte STATE_REDIRECT = 0x03; // Consistency; points to an updated state location.
+    // --- STATE HEADERS ---
+    private static final byte STATE_LINEAR   = 0x01; // Compact sequential lookup
+    private static final byte STATE_JUMP     = 0x02; // O(1) branching for hubs
+    private static final byte STATE_REDIRECT = 0x03; // Consistency tombstone for updates
 
-    /**
-     * ARC PROTOCOL (BIT-FLAGS)
-     * Compact bit-masking to handle optional payloads (payoffs/targets).
-     */
-    private static final byte FLAG_LAST_ARC    = 0x01; // End of this state's branches.
-    private static final byte FLAG_HAS_PAYOFF  = 0x02; // This transition carries a numeric value.
-    private static final byte FLAG_TERMINAL    = 0x04; // This transition completes a valid key path.
-    private static final byte FLAG_TARGET_NEXT = 0x08; // Optimization: next state follows immediately.
+    // --- ARC PROTOCOL BIT-FLAGS ---
+    private static final byte FLAG_LAST_ARC    = 0x01; // State boundary
+    private static final byte FLAG_HAS_PAYOFF  = 0x02; // Carries numeric payoff
+    private static final byte FLAG_TERMINAL    = 0x04; // Path completion
+    private static final byte FLAG_TARGET_NEXT = 0x08; // Physical adjacency
 
-    // --- ANALYTICS & MAINTENANCE ---
+    // --- ANALYTICS ---
     private final AtomicLong changeCounter = new AtomicLong(0);
-    private final AtomicLong lastCompactionPoint = new AtomicLong(0);
     private volatile Map<Integer, Integer> gravityMap = new ConcurrentHashMap<>();
 
     public PayoffAutomaton(int initialCapacity) {
@@ -45,16 +86,12 @@ public class PayoffAutomaton {
         this.writePointer = 0;
     }
 
-    // ========================================================================
-    // HIGH-CONCURRENCY SEARCH ENGINE
-    // ========================================================================
-
     /**
      * Traverses the automaton for a key, accumulating edge-payoffs.
-     * Uses local snapshotting for non-blocking performance during updates/compaction.
+     * Snapshot-on-read ensures lock-free consistency.
      */
     public long search(String key) {
-        byte[] d = this.buffer; // Local reference to the volatile buffer
+        byte[] d = this.buffer; 
         int currentOffset = resolveRedirects(d, rootOffset);
         long accumulatedPayoff = 0;
 
@@ -63,41 +100,32 @@ public class PayoffAutomaton {
             byte type = d[currentOffset];
             int arc;
 
-            // PERFORMANCE PLUG: Determine lookup strategy based on state type
             if (type == STATE_JUMP) {
                 arc = findArcJump(d, currentOffset, label);
             } else {
                 arc = findArcLinear(d, currentOffset + 1, label);
             }
 
-            if (arc == -1) return -1; // Path divergence
+            if (arc == -1) return -1;
 
             byte flags = d[arc];
-            int[] pos = {arc + 3}; // Skip header (1 byte) and char (2 bytes)
+            int[] pos = {arc + 3};
 
             if ((flags & FLAG_HAS_PAYOFF) != 0) {
                 accumulatedPayoff += readVarLong(d, pos);
             }
 
             if ((flags & FLAG_TERMINAL) != 0) {
-                // Return payoff only if the full key was matched
-                return (i == key.length() - 1) ? accumulatedPayoff : -1;
+                if (i == key.length() - 1) return accumulatedPayoff;
             }
 
-            // Move to next state, following any redirect tombstones
             currentOffset = resolveRedirects(d, getNextStateOffset(d, flags, arc, pos));
         }
-        return accumulatedPayoff;
+        return -1;
     }
 
-    // ========================================================================
-    // NATURAL CLUSTERING (THE NOVEL LAYER)
-    // ========================================================================
-
     /**
-     * Gravity Map Discovery:
-     * Identifies 'Natural Clusters' (Hubs) by scanning the buffer for 
-     * high-frequency target offsets.
+     * Discovery Layer: Updates the gravity map to identify natural clusters.
      */
     public synchronized void updateStructuralGravity() {
         Map<Integer, Integer> newGravity = new HashMap<>();
@@ -121,7 +149,6 @@ public class PayoffAutomaton {
                 int[] w = {arc + 3};
                 if ((f & FLAG_HAS_PAYOFF) != 0) readVarLong(d, w);
                 
-                // Track transition targets to identify clusters
                 if ((f & FLAG_TERMINAL) == 0 && (f & FLAG_TARGET_NEXT) == 0) {
                     int target = (int) readVarLong(d, w);
                     newGravity.put(target, newGravity.getOrDefault(target, 0) + 1);
@@ -132,10 +159,6 @@ public class PayoffAutomaton {
         }
         this.gravityMap = new ConcurrentHashMap<>(newGravity);
     }
-
-    // ========================================================================
-    // LOW-LEVEL PROTOCOLS
-    // ========================================================================
 
     private int resolveRedirects(byte[] b, int offset) {
         while (b[offset] == STATE_REDIRECT) {
@@ -158,7 +181,6 @@ public class PayoffAutomaton {
     }
 
     private int findArcJump(byte[] b, int stateOffset, char label) {
-        // Optimization: Standard 256-slot Jump Table for ASCII/ISO-8859-1
         if (label > 255) return findArcLinear(b, stateOffset + 513, label);
         int entry = stateOffset + 1 + ((int) label * 2);
         int rel = ((b[entry] & 0xFF) << 8) | (b[entry + 1] & 0xFF);
