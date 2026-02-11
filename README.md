@@ -1,22 +1,20 @@
 # payoffdeals ⚡
 **Deterministic Systems Toolkit**  
-Auditable. Deterministic. Performance-conscious.
+Auditable. Deterministic. Privacy-first. Performance-conscious.
 
 ---
 
 ## 📌 Overview
 
-`payoffdeals` is a **modular, high-integrity toolkit** for:
+`payoffdeals` is a **modular toolkit** for:
 
 - Browser/device fingerprinting  
 - Memory-hard Proof-of-Work  
 - High-performance adaptive data structures  
 - Persistent graph storage  
 
-Each module is **standalone**, but modules can be **combined into pipelines** for verification, scoring, or anti-abuse flows.
-
-> **Core Philosophy:**  
-> Each module is **deterministic, auditable, and performance-conscious**. Innovations are highlighted to attract developers and researchers, while remaining fully reproducible and transparent.
+Each module is **standalone**, but modules can be **combined into pipelines** for verification, scoring, or anti-abuse flows.  
+**Core philosophy:** deterministic outputs, reproducible results, and **no collection of personal behavioral data**.
 
 ---
 
@@ -29,77 +27,95 @@ Each module is **standalone**, but modules can be **combined into pipelines** fo
 | **PayoffAutomaton** | `PayoffAutomaton.java` | Lock-free, density-aware finite state transducer |
 | **FileSocialGraph** | `FileSocialGraph.java` | Persistent file-backed graph engine with REST API |
 
-> Modules are independent; integrate only what you need, or compose full verification pipelines.
+> Modules are independent; use what you need or integrate them into pipelines.
 
 ---
 
-# 🛠 PayOffFP — Deterministic Fingerprinting
+## 🛠 PayOffFP — Deterministic Fingerprinting
 
-**Version:** v2.8.6 Extended  
+**Version:** v2.8.6 Extended
 
-### Core Functionality
-- Generates deterministic `fusedId` using **Canvas, GPU, Audio, Native API**  
-- Optional **progressive telemetry**: fast partial fingerprint first, full fusedId later  
-- Server-verifiable, lightweight, and auditable  
+Generates a **deterministic fusedId** using Canvas, GPU, Audio, and Native API **without collecting personal behavioral data**.  
+Server-verifiable, auditable, lightweight, and reproducible.
+
+### Key Features
+
+- Canvas/WebGL fingerprint  
+- Audio context fingerprint  
+- Native API integrity checks  
+- Nonce-bound fused identity  
+- Progressive telemetry flow
 
 ### **Novel Approaches / Innovations**
-- **Progressive telemetry**: first sends partial identifiers for low-latency verification, then full fusedId asynchronously.  
-- **Cross-signal fusion**: combines multiple entropy sources (canvas, GPU, audio, device APIs) for a deterministic yet robust identifier.  
-- **Nonce-bound caching**: prevents replay attacks while keeping fingerprints reproducible.  
+
+- **Deterministic fusion of multiple entropy sources** (Canvas, GPU, Audio, Native API)  
+- **Privacy-first design:** no AI/ML, no behavioral data collection, fully auditable  
+- **Progressive telemetry:** partial identifiers first, full fusedId later  
+- **Nonce-bound caching:** prevents replay attacks while keeping fingerprints reproducible  
+- **Cross-language compatibility:** works in JS ↔ Java environments  
 
 ---
 
-# 🛡 PayOffPoW — Memory-Hard Proof-of-Work
+## 🛡 PayOffPoW — Proof-of-Work Engine
 
-**Version:** v7.5.4 “Omni Titan”  
+**Version:** v7.5.4 “Omni Titan”
 
-### Core Functionality
-- Runs in a **Web Worker** to avoid blocking UI  
-- **Singleton guard:** prevents multiple concurrent PoW processes  
-- **Clock-skew tolerance:** 5-minute leeway for client clocks  
-- Deterministic SHA-256 resets prevent ghost collisions  
+- Runs inside a **Web Worker**  
+- **Singleton guard:** prevents multiple concurrent workers  
+- **Clock-skew tolerance:** 5 minutes  
+- Deterministic SHA-256 state resets prevent ghost collisions  
 - Client-side Ed25519 ticket verification  
 
+### Highlights
+
+- Adaptive memory-hard computation  
+- Progress callbacks for UI responsiveness  
+- Replay-token binding for security  
+- Hardware fallback for constrained devices  
+
 ### **Novel Approaches / Innovations**
-- **Adaptive memory-hard computation**: dynamically adjusts memory usage based on device capabilities.  
-- **Replay-token binding**: ensures PoW solutions are single-use and context-specific.  
-- **Progressive SHA-256 hashing with yields**: balances CPU load while allowing UI responsiveness.  
+
+- **Deterministic memory-hard algorithm** optimized for constrained environments  
+- **SHA-256 Ghost State reset**: prevents hash collisions across sessions  
+- **Web Worker isolation** for non-blocking UI  
+- **Client-side cryptographic ticket verification** ensures early detection of invalid requests  
 
 ---
 
-# 🤖 PayoffAutomaton — Adaptive Lock-Free FST
+## 🤖 PayoffAutomaton — Adaptive FST
 
-### Core Functionality
-- **Lock-free concurrency**: supports safe multi-threaded reads/writes with tombstones + volatile buffers  
-- **Cache-friendly**: flag-based arcs and optimized node layouts  
-- **Snapshot-on-read**: enables consistent reads without locks  
+- **Structural Gravity:** identifies dense hub states for optimal jumps  
+- **Adaptive Topology:** dynamically switches between linear and jump-table lookups  
+- **Lock-Free Concurrency:** redirect tombstones + volatile buffers allow concurrent reads/writes  
+- **Cache-Friendly:** flag-based arc encoding optimized for L1/L2 cache  
+
+Supports **payoff accumulation** along paths and is snapshot-safe for concurrent reads.
 
 ### **Novel Approaches / Innovations**
-- **Structural gravity for hubs**: automatically identifies dense nodes and optimizes jump tables — a rare design in FSTs.  
-- **Adaptive topology switching**: linear vs jump-table lookups are chosen dynamically per hub.  
-- **Payoff accumulation along paths**: allows deterministic scoring / weighting of transitions without locks.  
 
-> **Research-ready:** These features make it suitable for experimental or high-performance state machine designs.
+- **Built-in clustering:** reduces lookup overhead in dense state hubs (rare in FSTs)  
+- **Adaptive state promotion:** automatically optimizes based on usage density  
+- **Lock-free snapshot reads:** ensures consistency without blocking writers  
 
 ---
 
-# 📁 FileSocialGraph — Persistent Graph Engine
+## 📁 FileSocialGraph — Persistent Graph Engine
 
-### Core Functionality
-- File-backed append-only graph  
-- Atomic sidecar index for fast lookups  
-- REST API: `/health`, `/backup`, `/path?start=A&end=B`  
-- Self-healing index rebuild  
-- Segmented mmap for datasets >1GB  
+- File-backed append-only graph with **atomic sidecar index**  
+- REST API endpoints: `/health`, `/backup`, `/path?start=A&end=B`  
+- Self-healing index rebuild for integrity  
+- Segmented mmap for large datasets (1GB+)  
 
 ### **Novel Approaches / Innovations**
-- **Hybrid storage + index**: enables persistent graph access with fast queries.  
-- **Segmented memory mapping**: efficiently handles very large datasets with minimal RAM footprint.  
-- **Self-healing index**: automatic recovery of corrupted or incomplete data structures.  
+
+- **Persistent append-only graph** for auditability and reproducibility  
+- **Segmented mmap storage** for extremely large datasets  
+- **Self-healing index** reduces corruption risk  
+- **REST API exposure** allows lightweight integration with other systems  
 
 ---
 
-# 📊 Ecosystem Comparison
+## 📊 Ecosystem Comparison
 
 | Feature | PayOffFP | FPJS OSS | FPJS Enterprise | ThreatMetrix |
 |---------|-----------|----------|----------------|--------------|
@@ -107,42 +123,41 @@ Each module is **standalone**, but modules can be **combined into pipelines** fo
 | Server Verification | ✔️ | ❌ | ❌ | ❌ |
 | Canvas/WebGL/Audio | ✔️ | ✔️ | ✔️ | Partial |
 | Native API Checks | ✔️ | ❌ | ✔️ | ✔️ |
-| Nonce-Bound / Anti-Replay | ✔️ | ❌ | ❌ | ❌ |
-| Progressive Telemetry | ✔️ | ❌ | ❌ | ❌ |
-| Lock-Free FST / Cluster Hubs | ❌ | ❌ | ❌ | ❌ |
+| Behavioral / ML | ❌ | ✔️ | ✔️ | ✔️ |
+| Privacy-First | ✔️ | ❌ | ❌ | ❌ |
 | Open Source | ✔️ | ✔️ | ❌ | ❌ |
 
 ---
 
-# 🎯 Principles
+## 🎯 Principles
 
 - Deterministic & auditable outputs  
 - Modular & standalone  
+- Privacy-first (no behavioral data collection)  
 - Lightweight & high-performance  
-- Extensible for telemetry, PoW, scoring, or automation pipelines  
+- Extensible for telemetry, PoW, or scoring pipelines  
 
 ---
 
-# ⚖️ License
+## ⚖️ License
 
 Apache 2.0 — See `LICENSE` file.
 
 ---
 
-# ⚠️ Limitations
+## ⚠️ Limitations
 
-- Not a full behavioral / ML scoring platform  
+- No behavioral ML scoring  
 - No bundled backend services  
 - Fingerprint entropy varies by environment  
 
 ---
 
-# 🚀 Intended Use
+## 🚀 Intended Use
 
 - Infrastructure protection  
 - Deterministic verification  
 - Performance testing  
 - Anti-abuse flows  
 
-> **Important:** Not intended for unlawful surveillance or misuse.  
-
+> Not intended for unlawful surveillance or misuse.
