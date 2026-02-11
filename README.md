@@ -38,6 +38,47 @@ For reproducible solutions in security, integrity, and performance.
 
 ---
 
+## 🛡 PayOffPoW — Proof-of-Work Engine
+
+**v7.5.4 “Omni Titan” | Hardened Production**  
+
+- **Singleton Guard:** Prevents multiple concurrent workers.  
+- **Clock-Skew Leeway:** 5-minute tolerance for client clocks.  
+- **Deterministic SHA-256 Reset:** Zeroes "Ghost State" to prevent collisions.  
+- **Implementation:** Curated with Gemini 3 Flash & ChatGPT guidance.  
+- **Attribution:** Original PoW design adapted & optimized by user + Gemini + ChatGPT.
+
+**Usage Highlights:**
+
+- Runs in a **web worker** to prevent blocking UI.  
+- Performs **memory-hard deterministic SHA-256 computation** with optional progress callbacks.  
+- Configurable difficulty (`d`) and memory parameters.  
+- Includes **client-side verification of ticket signatures** with a server public key.  
+
+> For full code and integration, see `PayOffPoW.js`.
+
+---
+
+## 🤖 PayoffAutomaton — Density-Aware FST
+
+**Self-Optimizing, Lock-Free Finite State Transducer**  
+
+- **Structural Gravity:** Tracks dense hub states for optimized jump tables.  
+- **Adaptive Topology:** Switches between linear and jump-table lookups dynamically.  
+- **Lock-Free Concurrency:** Redirect tombstones + volatile buffers allow safe concurrent reads/updates.  
+- **Cache-Friendly:** Optimized for L1/L2 cache locality via flag-based arcs.  
+- **Analytics:** Gravity map identifies natural clusters for selective optimization.  
+
+**Highlights:**
+
+- Supports **payoff accumulation** along automaton paths.  
+- Snapshot-on-read ensures **lock-free consistency**.  
+- Adaptive hub promotion reduces memory and improves runtime efficiency.  
+
+> For full implementation, see `PayoffAutomaton.java`.
+
+---
+
 ## 📊 Ecosystem Comparison
 
 | Feature | PayOffFP | FPJS OSS | FPJS Enterprise | ThreatMetrix |
@@ -59,6 +100,7 @@ For reproducible solutions in security, integrity, and performance.
 - Lightweight & transparent  
 - Easily extendable  
 - Optional progressive telemetry  
+- Advanced data structures (PayoffAutomaton) for efficiency  
 
 ---
 
@@ -78,10 +120,11 @@ For reproducible solutions in security, integrity, and performance.
 
 ---
 
-## 📝 Why PayOffFP?
+## 📝 Why payoffdeals?
 
 - Deterministic, server-verifiable fused ID  
 - Transparent, auditable logic  
 - Lightweight, fast, extensible  
+- Optimized structures for high-performance applications  
 
-**Designed as a baseline fingerprinting framework** for integration into larger verification or fraud detection systems.
+**Designed as a baseline framework** for integration into larger verification, PoW, or automation systems.
