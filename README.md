@@ -16,7 +16,7 @@ Through this initiative, we share the **Deterministic, Auditable, and Privacy-Fi
 - **Philosophy:** deterministic outputs, reproducible results, no behavioral data collection, privacy-first.  
 - **Target Audience:** developers, security engineers, researchers, and infrastructure teams.
 
-**modular toolkit** for:
+**Modular Toolkit** for:
 
 - Browser/device fingerprinting  
 - Memory-hard Proof-of-Work  
