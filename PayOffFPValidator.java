@@ -1,7 +1,7 @@
 import java.util.*;
 
 /**
- * PayOffFPValidator - v2.8.6 | Gold Standard
+ * PayOffFPValidator - v2.8.6 
  * Refactored to use centralized PayOffFPHash utility.
  * Strictly Java 8 compatible.
  */
