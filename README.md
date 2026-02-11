@@ -8,7 +8,7 @@ Auditable. Deterministic. Privacy-first. Performance-conscious.
 
 ## 🌐 About PayOffDeals
 
-**PayOffDeals** is Next Generation Cashback & Benefits Platform developed by **Data Motifs**, with a strong focus on **User Privacy and Security**. Beyond innovating in the platform itself, we have also extended our work into the **modular software components** that power it.  
+**PayOffDeals** is a next generation Cashback & Benefits Platform developed by **Data Motifs**, with a strong emphasis on **User Privacy and Security**. Beyond innovating in the platform itself, we have also expanded our work into the **modular software components** that power it.  
 
 Through this initiative, we share the **Deterministic, Auditable, and Privacy-First** solutions we have built, making them available to fellow developers and researchers.
 
