@@ -125,7 +125,9 @@ Supports **payoff accumulation** along paths and is snapshot-safe for concurrent
 
 ---
 
-## 📊 Ecosystem Comparison
+## 📊 Finger Printing Ecosystem Comparison
+
+FPJS - FingerprintJS
 
 | Feature | PayOffFP | FPJS OSS | FPJS Enterprise | ThreatMetrix |
 |---------|-----------|----------|----------------|--------------|
