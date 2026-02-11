@@ -1,26 +1,87 @@
-Universal Software Use & Legal Disclaimer
+# payoffdeals — Universal Tools & Libraries ⚡
 
-Applicable to all projects, tools, and libraries released under payoffdeals.
+**Deterministic, auditable, and extensible solutions for developers**  
+For reproducible solutions in security, integrity, and performance.
 
-Purpose & Ethical Scope
+---
 
-The software provided in this repository is designed to solve specific technical challenges, ranging from security and integrity to productivity and data processing.
+## ⚖️ Legal & Ethical Guidelines
 
-Intended Use: Users are expected to utilize these tools for their designed purpose—improving software ecosystems, protecting digital infrastructure, or enhancing user experiences.
+**Use responsibly — no malicious activity.**  
 
-Ethical Constraints: This software must not be repurposed for malicious activities, including but not limited to: unauthorized data harvesting, privacy violations, or the facilitation of illegal acts.
+- **Purpose:** Improve software, protect infrastructure, enhance performance.  
+- **Heuristics:** Outputs are indicative, not absolute.  
+- **Warranty:** “As-is”, no guarantees.  
+- **Liability:** Contributors not responsible for damage or downtime.  
+- **Compliance:** Follow all laws (GDPR, CCPA, export control).  
+- **License:** Apache 2.0 (see LICENSE file).
 
-"As-Is" Provision & Liability
+---
 
-Heuristics & Logic: Many of our tools (such as PayOffFP) rely on heuristic models and probabilistic logic. While we strive for high precision, outputs should be treated as estimations and not absolute certainties.
+## 📂 Repo Structure
 
-No Warranty: In accordance with standard open-source practices, this software is provided "as is." We do not guarantee that the software will be error-free, uninterrupted, or meet specific performance requirements.
+- Independent modules; each self-contained.  
+- Inline docs included where relevant.  
+- Explore and integrate what you need.  
+- **Audience:** Developers familiar with deterministic, security, or performance-sensitive systems.  
+- **Extensible:** Designed to be forked or integrated into larger systems.
 
-Liability Limitation: The developers and contributors shall not be held liable for any damages, data loss, or service disruptions arising from the use or inability to use this software.
+---
 
+## 🛠 Key Component: PayOffFP
 
-Compliance & Governance
+**v2.8.6 | Fully Auditable | Server-Verifiable**  
 
-User Responsibility: Users are solely responsible for ensuring that their implementation of this software complies with all applicable local and international laws (including but not limited to GDPR, CCPA, and export control laws).
+- Generates deterministic `fusedId` using **canvas, GPU, audio, native API**.  
+- Optional **progressive telemetry** (fast first, then full fusedId).  
+- Lightweight, open-source, transparent, cross-language (JS ↔ Java).
 
-Licensing: Use of this software is governed by the specific license file included in the repository (e.g., MIT, Apache 2.0). Please refer to the LICENSE file for details on permissions and limitations.
+---
+
+## 📊 Ecosystem Comparison
+
+| Feature | PayOffFP | FPJS OSS | FPJS Enterprise | ThreatMetrix |
+|---------|-----------|----------|----------------|--------------|
+| Deterministic ID | ✔️ | ❌ | ❌ Config | ❌ |
+| Server Verification | ✔️ | ❌ | ❌ | ❌ |
+| Canvas/WebGL/Audio | ✔️ | ✔️ | ✔️ | Partial |
+| Native API Checks | ✔️ | ❌ | ✔️ | ✔️ |
+| Behavioral / ML | ❌ | ✔️ | ✔️ | ✔️ |
+| Open Source | ✔️ | ✔️ | ❌ | ❌ |
+
+> **Tip for mobile:** Tables scroll horizontally if too wide.
+
+---
+
+## ⭐ Strengths
+
+- Deterministic backend sync  
+- Lightweight & transparent  
+- Easily extendable  
+- Optional progressive telemetry  
+
+---
+
+## ❌ Limitations
+
+- Not a full fraud platform  
+- No behavioral or anomaly scoring yet  
+- Integration needed for advanced risk engines
+
+---
+
+## 🚀 Contribution Opportunities
+
+**Feature Enhancements:** pointer/mouse/touch timing, network/client hints, fonts, multi-language servers  
+**Advanced Detection:** bot heuristics, WebAuth/WebRTC anomalies, API tamper detection  
+**Packaging & Tooling:** NPM module, TypeScript typings, demo app
+
+---
+
+## 📝 Why PayOffFP?
+
+- Deterministic, server-verifiable fused ID  
+- Transparent, auditable logic  
+- Lightweight, fast, extensible  
+
+**Designed as a baseline fingerprinting framework** for integration into larger verification or fraud detection systems.
