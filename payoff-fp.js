@@ -1,5 +1,5 @@
 /**
- * PayOffFP - v2.8.6 | Gold Standard Extended
+ * PayOffFP - v2.8.6 - Extended
  * Fully hardened baseline with progressive telemetry support
  */
 (function(root) {
@@ -199,3 +199,4 @@ async function sendFingerprint() {
     }
 }
 */
+
