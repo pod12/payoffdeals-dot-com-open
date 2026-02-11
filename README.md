@@ -10,7 +10,7 @@ Auditable. Deterministic. Privacy-first. Performance-conscious.
 
 **PayOffDeals** is a cashback platform developed by **Data Motifs**, with a strong focus on **user privacy and benefits**. Beyond innovating in the platform itself, we have also extended our work into the **modular software components** that power it.  
 
-Our mission is to provide **deterministic, auditable, and privacy-first solutions** for developers and researchers.  
+Through this initiative, we share the deterministic, auditable, and privacy-first solutions we have built, making them available to fellow developers and researchers.
 
 - **Product:** `payoffdeals` — a modular ecosystem of high-integrity tools for fingerprinting, PoW, adaptive data structures, and persistent graphs.  
 - **Philosophy:** deterministic outputs, reproducible results, no behavioral data collection, privacy-first.  
