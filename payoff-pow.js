@@ -1,178 +1,139 @@
 /**
- * PayOffPoW: v1.6.0
- * ---------------------------------
- * A privacy-first, memory-hard Proof of Work engine.
- * v1.6.0: Entropy hardening, Adaptive Progress, and Memory Safeguards.
+ * PayOffPoW v7.5.4 - "Omni Titan" (Hardened Production)
+ * * Features:
+ * - Singleton Guard: Prevents multiple concurrent workers.
+ * - Clock-Skew Leeway: 5-minute tolerance for client system clocks.
+ * - Deterministic SHA-256 Reset: Zeroes "Ghost State" to prevent collisions.
+ * * Implementation: Created & curated with Gemini 3 Flash & ChatGPT guidance.
+ * Attribution: Original PoW design adapted & optimized by user + Gemini + ChatGPT.
  */
 
-const PayOffPoW = {
-    // REFINED: Maximum deterministic entropy for padding
-    _getSafePad: (n, salt = "payoff_v1") => {
-        const h = PayOffPoW.hash(n + salt);
-        const hex = h.split('').filter(c => /[a-f0-9]/.test(c));
-        if (hex.length === 0) return "0";
-        
-        // Ensure indices exist regardless of future hash length variations
-        const head = parseInt(h.substring(0, 4) || "0", 16);
-        const mid  = parseInt(h.substring(Math.floor(h.length/2) - 2, Math.floor(h.length/2) + 2) || "0", 16);
-        const tail = parseInt(h.substring(h.length - 4) || "0", 16);
-        
-        const idx = (head ^ mid ^ tail) % hex.length;
-        return hex[idx];
-    },
+const PayOffPoW = (function() {
+    let activeWorker = null; // The Singleton Guard
 
-    hash: (str, seed = 0) => {
-        try {
-            let h1 = 0xdeadbeef ^ seed, h2 = 0x41c6ce57 ^ seed;
-            for (let i = 0, ch; i < str.length; i++) {
-                ch = str.charCodeAt(i);
-                h1 = Math.imul(h1 ^ ch, 2654435761);
-                h2 = Math.imul(h2 ^ ch, 1597334677);
-            }
-            h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
-            h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
-            const res = (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(16);
-            return (!res || res === "h_err") ? "0000000000000000" : res;
-        } catch (e) { return "0000000000000000"; }
-    },
+    const workerCode = `
+        importScripts('https://cdn.jsdelivr.net/npm/tweetnacl@1.0.3/nacl-fast.min.js');
 
-    solve: function(d, n, p, t, options = {}) {
-        const { debug = false, onProgress = null } = options;
-        const _d = parseInt(d) || 100000;
-        const _p = Math.min(Math.max(parseInt(p) || 16, 8), 22);
-        const _t = parseInt(t) || 0;
-        const _n = (n && typeof n === 'string') ? n : "default_nonce";
-
-        return new Promise(async (resolve) => {
-            const mask = (1 << _p) - 1;
-            const padChar = this._getSafePad(_n);
-            
-            // Environment checks: Browser vs Server
-            const isBrowser = typeof window !== 'undefined' && typeof Worker !== 'undefined';
-            
-            if (isBrowser && typeof Blob !== 'undefined') {
-                try {
-                    // Worker Code Template
-                    const workerCode = `const hash=${this.hash.toString()};self.onmessage=e=>{const{d,n,mask,t,padChar,report}=e.data;let rs=hash(n);const mem=new Uint32Array(mask+1);const step=Math.max(10,d/25|0);for(let i=0;i<d;i++){if(report&&i%step===0)self.postMessage({p:i/d});if(rs.length<16)rs=rs.padEnd(16,padChar);const h=((rs.charCodeAt(0)^rs.charCodeAt(4)^rs.charCodeAt(8)^rs.charCodeAt(12))<<12)|((rs.charCodeAt(1)^rs.charCodeAt(5)^rs.charCodeAt(9)^rs.charCodeAt(13))<<8)|((rs.charCodeAt(2)^rs.charCodeAt(6)^rs.charCodeAt(10)^rs.charCodeAt(14))<<4)|(rs.charCodeAt(3)^rs.charCodeAt(7)^rs.charCodeAt(11)^rs.charCodeAt(15));const m=(i^h)&mask;mem[m]=(i+(h^t))>>>0;rs=hash(rs+mem[m].toString(36))}self.postMessage({s:rs})}`;
-                    
-                    const blob = new Blob([workerCode], { type: 'application/javascript' });
-                    const url = URL.createObjectURL(blob);
-                    const worker = new Worker(url);
-
-                    worker.onmessage = (e) => {
-                        if (e.data.p !== undefined && onProgress) onProgress(e.data.p);
-                        if (e.data.s) {
-                            worker.terminate();
-                            URL.revokeObjectURL(url);
-                            resolve({ solution: e.data.s, worker: true });
-                        }
-                    };
-                    worker.onerror = (err) => {
-                        if (debug) console.warn("PayOffPoW: Worker failed, using sync.");
-                        this._solveSync({ d: _d, n: _n, mask, t: _t, padChar }, onProgress).then(s => resolve({ solution: s, worker: false }));
-                    };
-                    worker.postMessage({ d: _d, n: _n, mask, t: _t, padChar, report: !!onProgress });
-                    return;
-                } catch (e) {
-                    if (debug) console.warn("PayOffPoW: Worker init error.");
+        const Engine = {
+            _compress: (block, ref) => {
+                for (let i = 0; i < 8; i++) {
+                    let a = block[i], b = ref[i], c = block[i + 8], d = ref[i + 8];
+                    a = (a + b) >>> 0; a = Math.imul(a, (b | 1)) >>> 0;
+                    d ^= a; d = (d << 16) | (d >>> 16);
+                    c = (c + d) >>> 0; c = Math.imul(c, (d | 1)) >>> 0;
+                    b ^= c; b = (b << 12) | (b >>> 20);
+                    a = (a + b) >>> 0; d ^= a; d = (d << 8) | (d >>> 24);
+                    c = (c + d) >>> 0; b ^= c; b = (b << 7) | (b >>> 25);
+                    block[i] = a; block[i + 8] = c; ref[i] = b; ref[i + 8] = d;
                 }
-            }
+            },
 
-            // Node.js or older browser fallback
-            const sol = await this._solveSync({ d: _d, n: _n, mask, t: _t, padChar }, onProgress);
-            resolve({ solution: sol, worker: false });
-        });
-    },
+            solve: async function(ticket, pubKey, replayToken, config = {}) {
+                const parts = ticket.split('.');
+                if(parts.length !== 5) throw new Error("MALFORMED_TICKET");
+                const [nonce, dStr, pStr, expStr, sigHex] = parts;
+                const d = parseInt(dStr, 10);
+                const p = parseInt(pStr, 10);
+                const exp = parseInt(expStr, 10);
 
-    _solveSync: async function(c, onProgress) {
-        let rs = this.hash(c.n);
-        const mem = new Uint32Array(c.mask + 1);
-        const yieldFreq = c.d > 500000 ? 250 : 1500; 
-        const progressStep = Math.max(10, c.d / 25 | 0);
-        
-        for (let i = 0; i < c.d; i++) {
-            if (i % yieldFreq === 0) {
-                if (onProgress && i % progressStep === 0) onProgress(i / c.d);
-                await new Promise(r => setTimeout(r, 0));
-            }
-            if (rs.length < 16) rs = rs.padEnd(16, c.padChar);
-            const hInt = ((rs.charCodeAt(0)^rs.charCodeAt(4)^rs.charCodeAt(8)^rs.charCodeAt(12)) << 12) | 
-                         ((rs.charCodeAt(1)^rs.charCodeAt(5)^rs.charCodeAt(9)^rs.charCodeAt(13)) << 8)  | 
-                         ((rs.charCodeAt(2)^rs.charCodeAt(6)^rs.charCodeAt(10)^rs.charCodeAt(14)) << 4) | 
-                          (rs.charCodeAt(3)^rs.charCodeAt(7)^rs.charCodeAt(11)^rs.charCodeAt(15));
-            const mIdx = (i ^ hInt) & c.mask;
-            mem[mIdx] = (i + (hInt ^ c.t)) >>> 0;
-            rs = this.hash(rs + mem[mIdx].toString(36));
-        }
-        return rs;
-    }
-};
+                // Verification with 5-minute clock leeway
+                const msg = new TextEncoder().encode(\`\${nonce}.\${d}.\${p}.\${exp}\`);
+                const sig = new Uint8Array(sigHex.match(/.{1,2}/g).map(b => parseInt(b, 16)));
+                if(!nacl.sign.detached.verify(msg, sig, pubKey)) throw new Error("AUTH_FAILED");
+                if(exp + 300000 < Date.now()) throw new Error("EXPIRED");
 
-/*
-(function() {
-    // 1. Private Configuration (Injected by server)
-    const config = {
-        d: 120000,
-        n: "NONCE_" + btoa(Math.random()).substring(0, 12),
-        p: 16,
-        t: 42
-    };
-
-    // 2. Private DOM Selectors
-    const UI = {
-        label: document.getElementById('status-label'),
-        percent: document.getElementById('status-percent'),
-        bar: document.getElementById('progress-bar')
-    };
-
-    // 3. The Execution Logic
-    const initVerification = async () => {
-        try {
-            if (UI.label) UI.label.innerText = "Securing connection...";
-
-            // Solve PoW
-            const result = await PayOffPoW.solve(config.d, config.n, config.p, config.t, {
-                debug: false, // Turn off in production
-                onProgress: (p) => {
-                    const percent = Math.round(p * 100);
-                    if (UI.bar) UI.bar.style.width = percent + "%";
-                    if (UI.percent) UI.percent.innerText = percent + "%";
+                let _p = Math.min(p, 22);
+                let memory, memSize;
+                while(_p >= 14){
+                    try { memSize = 1 << _p; memory = new Uint32Array(memSize * 16); break; }
+                    catch(e){ _p--; }
                 }
+                if(!memory) throw new Error("HARDWARE_LIMIT");
+
+                const mask = memSize - 1;
+                let block = new Uint32Array(16);
+
+                const seedData = \`\${nonce}:\${(replayToken || '').slice(0, 64)}\`;
+                const seed = new TextEncoder().encode(seedData);
+                for(let i=0; i < seed.length && i < 64; i++) block[i >> 2] |= seed[i] << ((i % 4) * 8);
+
+                // Warming
+                for(let pass=0; pass < 4; pass++){
+                    for(let i=0; i < memSize; i++){
+                        const target = (pass % 2 === 0) ? i : (memSize - 1 - i);
+                        const refOff = ((i * (pass + 3)) & mask) * 16;
+                        this._compress(block, memory.subarray(refOff, refOff + 16));
+                        memory.set(block, target * 16);
+                    }
+                }
+
+                const yieldFreq = config.yieldFreq || 2048;
+                for(let i=0; i < d; i++){
+                    const idxs = [(block[0] ^ block[15]) & mask, (block[4] ^ block[11]) & mask, (block[8] ^ block[3]) & mask];
+                    for(const idx of idxs){
+                        const offset = idx * 16;
+                        this._compress(block, memory.subarray(offset, offset + 16));
+                        const rot = block[0] & 15;
+                        const mut = new Uint32Array(16);
+                        for(let j=0; j < 16; j++) mut[j] = block[(j + rot) & 15] ^ i;
+                        memory.set(mut, offset);
+                    }
+
+                    if(i % 128 === 0){
+                        const h = await crypto.subtle.digest('SHA-256', block.buffer);
+                        const hBytes = new Uint8Array(h);
+                        for(let j=0; j < 8; j++) block[j] = hBytes[j*4] | (hBytes[j*4+1]<<8) | (hBytes[j*4+2]<<16) | (hBytes[j*4+3]<<24);
+                        for(let j=8; j < 16; j++) block[j] = 0;
+                    }
+
+                    if(i % yieldFreq === 0) await new Promise(r => setTimeout(r, 0));
+                    if(i % Math.max(1, Math.floor(d/100)) === 0) self.postMessage({type:'PROGRESS', val: i / d});
+                }
+
+                const final = await crypto.subtle.digest('SHA-256', block.buffer);
+                return { solution: Array.from(new Uint8Array(final)).map(b => b.toString(16).padStart(2,'0')).join(''), pUsed: _p };
+            }
+        };
+
+        self.onmessage = async (e) => {
+            try {
+                const res = await Engine.solve(e.data.ticket, e.data.pubKey, e.data.replayToken, e.data.config);
+                self.postMessage({ type: 'SUCCESS', ...res });
+            } catch(err) {
+                self.postMessage({ type: 'ERROR', msg: err.message });
+            }
+        };
+    `;
+
+    return {
+        SERVER_PUB_KEY: new Uint8Array([/* YOUR_KEY_HERE */]),
+
+        solve: function(ticket, onProgress, replayToken, config = {}) {
+            if (activeWorker) return { promise: Promise.reject(new Error("BUSY")), terminate: () => {} };
+
+            let url = null;
+            const promise = new Promise((resolve, reject) => {
+                if(typeof nacl === 'undefined') return reject(new Error("nacl missing"));
+                const blob = new Blob([workerCode], { type:'application/javascript' });
+                url = URL.createObjectURL(blob);
+                activeWorker = new Worker(url);
+
+                activeWorker.onmessage = (e) => {
+                    if(e.data.type === 'PROGRESS') onProgress?.(e.data.val);
+                    else if(e.data.type === 'SUCCESS') { cleanup(); resolve(e.data); }
+                    else if(e.data.type === 'ERROR') { cleanup(); reject(new Error(e.data.msg)); }
+                };
+
+                const cleanup = () => {
+                    if(activeWorker) { activeWorker.terminate(); activeWorker = null; }
+                    if(url) { URL.revokeObjectURL(url); url = null; }
+                };
+
+                activeWorker.onerror = (err) => { cleanup(); reject(err); };
+                activeWorker.postMessage({ ticket, pubKey: this.SERVER_PUB_KEY, replayToken, config });
             });
 
-            if (UI.label) UI.label.innerText = "Verifying with server...";
-
-            // 4. Internal Submission Helper
-            const response = await fetch('/api/verify-pow', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    solution: result.solution,
-                    nonce: config.n,
-                    d: config.d,
-                    p: config.p
-                })
-            });
-
-            if (response.ok) {
-                window.location.href = "/protected-content";
-            } else {
-                throw new Error("Validation Failed");
-            }
-
-        } catch (err) {
-            console.error("PoW Error:", err);
-            if (UI.label) UI.label.innerText = "Verification failed. Please refresh.";
-            alert("Security check failed. Bots are not allowed.");
+            return { promise, terminate: () => { if(activeWorker) { activeWorker.terminate(); activeWorker = null; } } };
         }
     };
-
-    // 5. Trigger on Load
-    if (document.readyState === 'complete') {
-        initVerification();
-    } else {
-        window.addEventListener('load', initVerification);
-    }
-
 })();
-*/
