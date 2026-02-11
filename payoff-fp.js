@@ -1,178 +1,201 @@
 /**
- * Entropy-Aggregation Fingerprinting System: Non-Cryptographic Hashing 
- * with a Weighted Clamped Linear Penalty Model.
- * * Version: 1.5.6
- * License: Apache-2.0
- * Copyright (c) 2026 d-motifs.com / payoffdeals.com
- * * Zero-Trust & Bot-Heuristics Implementation
+ * PayOffFP - v2.8.6 | Gold Standard Extended
+ * Fully hardened baseline with progressive telemetry support
  */
-/**
- * Entropy-Aggregation Fingerprinting System: Non-Cryptographic Hashing with a Weighted Clamped Linear Penalty Model.
- * Hardened Client-Side Fingerprinting v1.5.6
- * Zero-Trust & Bot-Heuristics
- * * FEATURES:
- * - 53-bit MurmurHash3 (Collision Resistant)
- * - CDP/Webdriver Instrumentation Traps
- * - Hardware/Storage Asymmetry Detection
- * - Iterative Clamped Confidence Scoring
- * - Fire-and-Forget Telemetry Collector
- *  https://d-motifs.com
- *  https://payoffdeals.com
- */
-const PayOffFP = {
-    /**
-     * Generates a 53-bit hash from a string.
-     * Uses Math.imul for high-performance 32-bit integer multiplication.
-     */
-    hash: (str, seed = 0) => {
-        let h1 = 0xdeadbeef ^ seed, h2 = 0x41c6ce57 ^ seed;
-        for (let i = 0, ch; i < str.length; i++) {
-            ch = str.charCodeAt(i);
-            h1 = Math.imul(h1 ^ ch, 2654435761);
-            h2 = Math.imul(h2 ^ ch, 1597334677);
+(function(root) {
+    const PayOffFP = {
+        _s: 0x41c6ce57, // Build-time seed
+        _cache: {},      // nonce-aware cache
+
+        /**
+         * Hardened Murmur3-style hash
+         * Handles strings and numeric TypedArrays
+         */
+        h: function(str, seed = this._s) {
+            let h1 = seed ^ 0xdeadbeef, h2 = seed ^ 0x41c6ce57;
+            for (let i = 0, ch; i < str.length; i++) {
+                ch = typeof str[i] === "number"
+                     ? (Math.floor(str[i] * 1e6) | 0) // signed 32-bit parity
+                     : str.charCodeAt(i);
+                h1 = Math.imul(h1 ^ ch, 2654435761);
+                h2 = Math.imul(h2 ^ ch, 1597334677);
+            }
+            h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+            h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+            return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(16);
+        },
+
+        /**
+         * Integrity checks for native APIs
+         */
+        gI: function() {
+            const check = (proto, method) => {
+                try {
+                    const desc = Object.getOwnPropertyDescriptor(proto, method);
+                    return desc && !desc.get && !desc.set &&
+                           /\{\s+\[native code\]\s+\}/.test(Function.prototype.toString.call(proto[method]));
+                } catch (e) { return false; }
+            };
+            return {
+                c2d: check(CanvasRenderingContext2D.prototype, 'getImageData'),
+                wgl: check(WebGLRenderingContext.prototype, 'getParameter'),
+                actx: window.AudioContext ? check(window, 'AudioContext') : true,
+                anod: window.AudioBufferSourceNode ? check(AudioBufferSourceNode.prototype, 'start') : true
+            };
+        },
+
+        /**
+         * Canvas fingerprinting
+         */
+        gC: function() {
+            try {
+                const c = document.createElement('canvas');
+                const x = c.getContext('2d');
+                const dpr = window.devicePixelRatio || 1;
+                c.width = 150 * dpr; c.height = 50 * dpr;
+                x.scale(dpr, dpr);
+                x.font = "14pt 'Arial'";
+                x.textBaseline = "top";
+                const a = 0.05, s = 1.1;
+                const cos = Math.cos(a), sin = Math.sin(a);
+                x.setTransform(s * cos, s * sin, -s * sin, s * cos, 2, 2);
+                x.fillText("PayOff_v2.8.6", 5, 5);
+                const data = x.getImageData(0, 0, 150 * dpr, 50 * dpr).data;
+                return { h: this.h(data), d: dpr };
+            } catch (e) { return { h: 'c_err', d: 1 }; }
+        },
+
+        /**
+         * Audio fingerprinting
+         */
+        gA: async function() {
+            if (!(window.OfflineAudioContext || window.webkitOfflineAudioContext)) return 'no_audio';
+            try {
+                const x = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(1, 44100, 44100);
+                const o = x.createOscillator();
+                const c = x.createDynamicsCompressor();
+                o.type = 'sawtooth';
+                c.threshold.value = -40;
+                o.connect(c); c.connect(x.destination);
+                o.start(0);
+                const b = await x.startRendering();
+                const d = b.getChannelData(0);
+
+                // Merge slices safely
+                const s1 = d.slice(0, 50);
+                const s2 = d.slice(Math.floor(d.length/2), Math.floor(d.length/2)+50);
+                const s3 = d.slice(-50);
+                let offset = 0;
+                const combined = new Float32Array(s1.length + s2.length + s3.length);
+                combined.set(s1, offset); offset += s1.length;
+                combined.set(s2, offset); offset += s2.length;
+                combined.set(s3, offset);
+
+                return this.h(combined);
+            } catch (e) { return 'a_err'; }
+        },
+
+        /**
+         * GPU fingerprinting
+         */
+        gG: function() {
+            try {
+                const c = document.createElement('canvas');
+                const g = c.getContext('webgl') || c.getContext('experimental-webgl');
+                if (!g) return { r: 'gpu_unavailable', ex: 'gpu_unavailable' };
+                const d = g.getExtension('WEBGL_debug_renderer_info');
+                const e = g.getSupportedExtensions() || [];
+                const renderer = d ? g.getParameter(d.UNMASKED_RENDERER_ID).toString().toLowerCase().trim().replace(/\s+/g,' ') : 'n/a';
+                return { r: renderer, ex: this.h(e.sort().join(',')) };
+            } catch (e) { return { r: 'err', ex: 'err' }; }
+        },
+
+        /**
+         * Main identity generator
+         */
+        getIdentity: async function(nonce = "") {
+            // Use cache if available for this nonce
+            if (nonce && this._cache[nonce]) return this._cache[nonce];
+
+            const [canvasObj, audio, integrity] = await Promise.all([this.gC(), this.gA(), this.gI()]);
+            const gpu = this.gG();
+            const n = navigator;
+            const anomalies = [];
+
+            if (Object.values(integrity).includes(false)) anomalies.push('api_tamper');
+            if (gpu.r.includes('err') || canvasObj.h.includes('err') || audio.includes('err')) anomalies.push('subsystem_err');
+
+            const fusedId = this.h([canvasObj.h, audio, gpu.r, gpu.ex, nonce].join('|'));
+
+            const identity = {
+                fusedId,
+                integrity,
+                anomalies,
+                components: {
+                    c: canvasObj.h,
+                    a: audio,
+                    r: gpu.r,
+                    e: gpu.ex,
+                    dpr: canvasObj.d,
+                    cores: n.hardwareConcurrency || 0,
+                    mem: n.deviceMemory || 0
+                },
+                ts: Date.now()
+            };
+
+            if (nonce) this._cache[nonce] = identity; // cache for nonce
+
+            return identity;
+        },
+
+        /**
+         * Multi-stage telemetry sender
+         */
+        sendTelemetry: async function(nonce, endpoint) {
+            const gpuPromise = Promise.resolve(this.gG());
+            const canvasPromise = Promise.resolve(this.gC());
+            const audioPromise = this.gA();
+
+            // Fast path: send GPU + Canvas immediately
+            Promise.all([canvasPromise, gpuPromise]).then(([canvas, gpu]) => {
+                fetch(endpoint + '/partial', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ c: canvas.h, r: gpu.r, ts: Date.now() })
+                }).catch(() => {});
+            });
+
+            // Final path: full fusedId after Audio completes
+            const result = await this.getIdentity(nonce);
+            return fetch(endpoint + '/verify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(result)
+            });
         }
-        h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
-        h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
-        return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(16);
-    },
+    };
 
-    /**
-     * Detects function shadowing/tampering.
-     * Checks for the [native code] string and validates prototype integrity.
-     */
-    isNative: function(fn) {
-        try {
-            if (typeof fn !== 'function') return false;
-            const str = Function.prototype.toString.call(fn);
-            return /\{\s+\[native code\]\s+\}/.test(str) && 
-                   (!fn.hasOwnProperty('prototype') || /^[A-Z]/.test(fn.name));
-        } catch (e) { return false; }
-    },
+    root.PayOffFP = PayOffFP;
+})(window);
 
-    /**
-     * Generates a canvas-based device signature.
-     * Uses a nonce to prevent replay attacks and ensures cleanup.
-     */
-    getCanvas: function(nonce) {
-        try {
-            const c = document.createElement('canvas');
-            const ctx = c.getContext('2d');
-            c.width = 240; c.height = 60;
-            ctx.textBaseline = "top";
-            ctx.font = "14px 'Arial'";
-            ctx.fillText(`T1.5.6_${nonce}`, 2, 2);
-            return c.toDataURL();
-        } catch (e) { return 'err'; }
-    },
+/*
+async function sendFingerprint() {
+    const serverNonce = "session_abc123"; // From server
+    const endpoint = "/api/v1";
 
-    /**
-     * Unmasks the WebGL renderer to identify the actual GPU hardware.
-     */
-    getWGL: function() {
-        try {
-            const c = document.createElement('canvas');
-            const gl = c.getContext('webgl') || c.getContext('experimental-webgl');
-            const d = gl.getExtension('WEBGL_debug_renderer_info');
-            return d ? gl.getParameter(d.UNMASKED_RENDERER_ID) : 'n/a';
-        } catch (e) { return 'err'; }
-    },
-
-    /**
-     * Synchronizes persistence between LocalStorage and Cookies.
-     * Helps detect "Incognito" mode or storage clearing behavior.
-     */
-    sync: function(k, v = null) {
-        try {
-            if (v) {
-                localStorage.setItem(k, v);
-                document.cookie = `${k}=${v}; Max-Age=31536000; path=/; SameSite=Lax; Secure`;
-                return v;
-            }
-            const cookie = document.cookie.split('; ').find(r => r.trim().startsWith(k+'='))?.split('=')[1];
-            return localStorage.getItem(k) || cookie || null;
-        } catch (e) { return null; }
-    },
-
-    /**
-     * Transmits telemetry to the server for model training.
-     * Uses Beacon API for non-blocking persistence.
-     */
-    transmit: async function(data, endpoint = "/v1/telemetry/ingest") {
-        try {
-            const payload = JSON.stringify({ ...data, perf: window.performance.now() });
-            if (navigator.sendBeacon) {
-                navigator.sendBeacon(endpoint, payload);
-            } else {
-                fetch(endpoint, { method: 'POST', body: payload, keepalive: true });
-            }
-        } catch (e) {}
-    },
-
-    /**
-     * Core identity engine. Aggregates traps, signatures, and heuristics.
-     */
-    getIdentity: function(serverNonce = null) {
-        const n = navigator, s = screen, w = window;
-        const nonce = serverNonce || Math.floor(Date.now() / 60000);
-        const flags = [];
-
-        // 1. INSTRUMENTATION TRAPS
-        try {
-            const e = new Error();
-            Object.defineProperty(e, 'stack', { get() { flags.push('bot_cdp'); return ""; } });
-            const _ = e.stack; 
-        } catch(e) {}
-
-        if (n.permissions && n.webdriver) flags.push('bot_webdriver_active');
-        if (w.outerWidth === 0 && w.outerHeight === 0) flags.push('bot_headless');
-        if (!this.isNative(n.toString)) flags.push('api_tampered');
-
-        // 2. HARDWARE SIGNATURES
-        const wgl_r = this.getWGL();
-        const core = { cpu: n.hardwareConcurrency, mem: n.deviceMemory, gpu: this.getCanvas(nonce), wgl: wgl_r };
-        const shell = { ua: n.userAgent, res: `${s.width}x${s.height}`, lang: n.language };
-
-        const coreHash = this.hash(JSON.stringify(core));
-        const shellHash = this.hash(JSON.stringify(shell));
-
-        // 3. HARMONY (CONSISTENCY) HEURISTICS
-        if (/iPhone|Android/i.test(shell.ua) && /RTX|GTX|NVIDIA|Radeon/i.test(wgl_r)) flags.push('harmony_gpu_mismatch');
-        if (n.languages && n.languages[0].substring(0,2) !== n.language.substring(0,2)) flags.push('harmony_lang_mismatch');
-
-        // 4. PERSISTENCE CHECKS
-        const prevData = this.sync('_payoff_fp');
-        const prev = prevData ? JSON.parse(prevData) : null;
-
-        if (prev && coreHash !== prev.coreHash) flags.push('storage_hardware_collision');
-        else if (!localStorage.getItem('_payoff_fp') && document.cookie.includes('_payoff_fp')) flags.push('storage_asymmetry');
-
-        // 5. CLAMPED CONFIDENCE SCORING
-        const penalties = { 'bot_': 0.6, 'harmony_': 0.4, 'storage_': 0.2, 'api_': 0.5 };
-        const confidence = flags.reduce((curr, flag) => {
-            const cat = Object.keys(penalties).find(k => flag.startsWith(k));
-            return Math.max(0, curr - (penalties[cat] || 0.1));
-        }, 1.0);
-
-        this.sync('_payoff_fp', JSON.stringify({ coreHash, shellHash }));
-
-        return {
-            id: this.hash(coreHash + shellHash),
-            hardwareId: coreHash,
-            confidence: confidence.toFixed(2),
-            riskFlags: [...new Set(flags)],
-            nonce: nonce,
-            ts: Date.now()
-        };
+    // Recommened: Use the built-in telemetry flow
+    // This fires /partial (fast) AND returns the promise for /verify (final)
+    try {
+        const response = await PayOffFP.sendTelemetry(serverNonce, endpoint);
+        const data = await response.json();
+        
+        if (data.status === "VERIFIED") {
+            console.log("Identity Locked:", data.fusedId);
+        } else {
+            console.warn("Anomalies detected:", data.anomalies);
+        }
+    } catch (err) {
+        console.error("Telemetry failed:", err);
     }
-};
-
-/**
- * Execution Wrapper
- */
-(async () => {
-    const report = PayOffFP.getIdentity();
-    // Transmit to collector for model training
-    await PayOffFP.transmit(report);
-    // Log for local debug
-    console.log("PayOff Intelligence Report:", report);
-})();
+}
+*/
