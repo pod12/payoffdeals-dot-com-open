@@ -30,12 +30,14 @@ Each module is **standalone**, but modules can be **combined into pipelines** fo
 
 ## 🧱 Modules
 
-| Module | File | Purpose |
-|--------|------|---------|
-| **PayOffFP** | `payoff-fp.js` | Deterministic browser/device fingerprinting |
-| **PayOffPoW** | `payoff-pow.js` | Memory-hard Proof-of-Work engine |
-| **PayoffAutomaton** | `PayoffAutomaton.java` | Lock-free, density-aware finite state transducer |
-| **FileSocialGraph** | `FileSocialGraph.java` | Persistent file-backed graph engine with REST API |
+| Module | File | Version | Purpose |
+|--------|------|---------|---------|
+| **PayOffFP** | `payoff-fp.js` | v2.8.6 Extended | Deterministic browser/device fingerprinting |
+| **PayOffFPBridge** | `PayOffFPBridge.java` | v1.0.0 | Integration layer linking deterministic fingerprints to server validation |
+| **PayOffPoW** | `payoff-pow.js` | v7.5.4 “Omni Titan” | Memory-hard Proof-of-Work engine |
+| **PayoffAutomaton** | `PayoffAutomaton.java` | v1.3.2 | Lock-free, density-aware finite state transducer |
+| **FileSocialGraph** | `FileSocialGraph.java` | v2.1.0 | Persistent file-backed graph engine with REST API |
+| **PayOffFPSecurityGateway** | `PayOffFPSecurityGateway.java` | v4.2.8 “Gold Standard” | Server-side anti-abuse and device registry with privacy-first design |
 
 > Modules are independent; use what you need or integrate them into pipelines.
 
@@ -63,6 +65,27 @@ Server-verifiable, auditable, lightweight, and reproducible.
 - **Progressive telemetry:** partial identifiers first, full fusedId later  
 - **Nonce-bound caching:** prevents replay attacks while keeping fingerprints reproducible  
 - **Cross-language compatibility:** works in JS ↔ Java environments  
+
+---
+
+## 🛡 PayOffFPBridge — Deterministic Fingerprint Integration Layer
+
+**Version:** v1.0.0  
+
+Acts as a **bridge between client-side fingerprinting (PayOffFP) and server-side validation**, allowing modular pipelines to **consume deterministic fused IDs** safely.  
+
+### Key Features
+
+- Bridges **browser/device fingerprinting** to backend validation  
+- **Session-aware**: helps server track legitimate sessions without storing raw identifiers  
+- **Non-intrusive**: operates with minimal footprint and deterministic outputs  
+
+### **Novel Approaches / Innovations**
+
+- **Incremental modular design**: standalone, can be plugged into existing pipelines without modifying core logic  
+- **Privacy-first computation**: identifiers are **opaque**, irreversible, and cannot reveal device-specific PII  
+- **Server-verifiable**: enables backend systems to verify fingerprints **without storing sensitive info**  
+- **Deterministic fusion**: preserves reproducibility across sessions and devices  
 
 ---
 
@@ -122,6 +145,38 @@ Supports **payoff accumulation** along paths and is snapshot-safe for concurrent
 - **Segmented mmap storage** for extremely large datasets  
 - **Self-healing index** reduces corruption risk  
 - **REST API exposure** allows lightweight integration with other systems  
+
+---
+
+## 🛡 PayOffFPSecurityGateway — Anti-Abuse & Device Registry
+
+**Version:** v4.2.8 “Gold Standard”  
+
+Provides a **high-integrity, server-side anti-abuse layer** leveraging deterministic fingerprints, session heuristics, and adaptive device registries.  
+
+### Key Features
+
+- Automated session pruning and HMAC-SHA256 anchoring  
+- Bloom filter-based device registry for **fast, memory-efficient tracking**  
+- Multi-user density checks and network velocity validation  
+- Bot detection heuristics via renderer and hardware signals  
+
+### **Novel Approaches / Innovations**
+
+- **Privacy-first design**: device identifiers are cryptographically obfuscated and non-reversible  
+- **Adaptive anti-abuse logic**: detects impossible travel, excessive user density, and virtual renderers  
+- **Incremental session management**: lock-free, cache-friendly, high-performance pruning  
+- **Server-side auditability**: metrics and registry updates are fully auditable without exposing raw device data  
+- **Hardened cryptography**: HMAC-SHA256 ensures fused IDs remain secure even if system internals are exposed  
+
+### **Privacy-First Philosophy**
+
+Even though this module uses fingerprinting for anti-abuse:  
+
+- All computations rely on **opaque, fused identifiers**  
+- No raw device/browser information is ever persisted in a recoverable form  
+- Identifiers are **irreversible**, ensuring **user privacy is preserved**  
+- Fully auditable design allows verification of behavior **without exposing personal data**  
 
 ---
 
