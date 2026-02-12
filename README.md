@@ -30,16 +30,17 @@ Each module is **standalone**, but modules can be **combined into pipelines** fo
 
 ## 🧱 Modules
 
-| Module | File | Version | Purpose |
-|--------|------|---------|---------|
-| **PayOffFP** | `payoff-fp.js` | v2.8.6 Extended | Deterministic browser/device fingerprinting |
-| **PayOffFPBridge** | `PayOffFPBridge.java` | v1.0.0 | Integration layer linking deterministic fingerprints to server validation |
-| **PayOffPoW** | `payoff-pow.js` | v7.5.4 “Omni Titan” | Memory-hard Proof-of-Work engine |
-| **PayoffAutomaton** | `PayoffAutomaton.java` | v1.3.2 | Lock-free, density-aware finite state transducer |
-| **FileSocialGraph** | `FileSocialGraph.java` | v2.1.0 | Persistent file-backed graph engine with REST API |
-| **PayOffFPSecurityGateway** | `PayOffFPSecurityGateway.java` | v4.2.8 “Gold Standard” | Server-side anti-abuse and device registry with privacy-first design |
+| Module | File | Purpose |
+|--------|------|---------|
+| **PayOffFP** | `payoff-fp.js` | Deterministic browser/device fingerprinting |
+| **PayOffFPBridge** | `payoff-fp-bridge.js` | Client-side bridge connecting PayOffFP telemetry to PayOffFPSecurityGateway |
+| **PayOffPoW** | `payoff-pow.js` | Memory-hard Proof-of-Work engine |
+| **PayoffAutomaton** | `PayoffAutomaton.java` | Lock-free, density-aware finite state transducer |
+| **FileSocialGraph** | `FileSocialGraph.java` | Persistent file-backed graph engine with REST API |
+| **PayOffFPSecurityGateway** | `PayOffFPSecurityGateway.java` | Server-side verification & anti-abuse engine using opaque fingerprint inputs |
 
-> Modules are independent; use what you need or integrate them into pipelines.
+> Modules are independent; use what you need or integrate them into pipelines.  
+> **PayOffFPBridge** demonstrates how standalone modules can be incrementally composed into new pipelines without changing core logic.
 
 ---
 
@@ -68,24 +69,27 @@ Server-verifiable, auditable, lightweight, and reproducible.
 
 ---
 
-## 🛡 PayOffFPBridge — Deterministic Fingerprint Integration Layer
+## 🔗 PayOffFPBridge — Client-Side Telemetry Bridge
 
-**Version:** v1.0.0  
+**Version:** v1.5.4 Production Ready
 
-Acts as a **bridge between client-side fingerprinting (PayOffFP) and server-side validation**, allowing modular pipelines to **consume deterministic fused IDs** safely.  
+Connects **PayOffFP telemetry** to **PayOffFPSecurityGateway** with resilience, observability, and cached device tier.
 
 ### Key Features
 
-- Bridges **browser/device fingerprinting** to backend validation  
-- **Session-aware**: helps server track legitimate sessions without storing raw identifiers  
-- **Non-intrusive**: operates with minimal footprint and deterministic outputs  
+- Jittered exponential backoff for resilient telemetry  
+- Hardware DNA anchor cookie for server verification  
+- Device trust tiering: HIGH / STANDARD / LOW  
+- Async-safe device classification (GPU, cores, touch points, battery)  
+- Cached device tier for repeated calls  
+- Optional observability via `attemptsUsed`  
 
 ### **Novel Approaches / Innovations**
 
-- **Incremental modular design**: standalone, can be plugged into existing pipelines without modifying core logic  
-- **Privacy-first computation**: identifiers are **opaque**, irreversible, and cannot reveal device-specific PII  
-- **Server-verifiable**: enables backend systems to verify fingerprints **without storing sensitive info**  
-- **Deterministic fusion**: preserves reproducibility across sessions and devices  
+- **Composable module design:** demonstrates incremental pipeline integration  
+- **Privacy-first:** device attributes are opaque; neither the bridge nor gateway can reconstruct behavioral profiles  
+- **Resilient telemetry:** jittered exponential backoff prevents server overload  
+- **Device trust tier caching:** avoids redundant computation while maintaining determinism  
 
 ---
 
@@ -132,51 +136,21 @@ Supports **payoff accumulation** along paths and is snapshot-safe for concurrent
 
 ---
 
-## 📁 FileSocialGraph — Persistent Graph Engine
+## 🛡 PayOffFPSecurityGateway — Server-Side Verification
 
-- File-backed append-only graph with **atomic sidecar index**  
-- REST API endpoints: `/health`, `/backup`, `/path?start=A&end=B`  
-- Self-healing index rebuild for integrity  
-- Segmented mmap for large datasets (1GB+)  
+**Version:** v4.2.8 Gold Standard
 
-### **Novel Approaches / Innovations**
-
-- **Persistent append-only graph** for auditability and reproducibility  
-- **Segmented mmap storage** for extremely large datasets  
-- **Self-healing index** reduces corruption risk  
-- **REST API exposure** allows lightweight integration with other systems  
-
----
-
-## 🛡 PayOffFPSecurityGateway — Anti-Abuse & Device Registry
-
-**Version:** v4.2.8 “Gold Standard”  
-
-Provides a **high-integrity, server-side anti-abuse layer** leveraging deterministic fingerprints, session heuristics, and adaptive device registries.  
-
-### Key Features
-
+- Auditable, deterministic anti-abuse engine  
+- Operates on opaque fingerprint telemetry from PayOffFP / PayOffFPBridge  
 - Automated session pruning and HMAC-SHA256 anchoring  
-- Bloom filter-based device registry for **fast, memory-efficient tracking**  
-- Multi-user density checks and network velocity validation  
-- Bot detection heuristics via renderer and hardware signals  
+- Device density and network velocity detection  
 
 ### **Novel Approaches / Innovations**
 
-- **Privacy-first design**: device identifiers are cryptographically obfuscated and non-reversible  
-- **Adaptive anti-abuse logic**: detects impossible travel, excessive user density, and virtual renderers  
-- **Incremental session management**: lock-free, cache-friendly, high-performance pruning  
-- **Server-side auditability**: metrics and registry updates are fully auditable without exposing raw device data  
-- **Hardened cryptography**: HMAC-SHA256 ensures fused IDs remain secure even if system internals are exposed  
-
-### **Privacy-First Philosophy**
-
-Even though this module uses fingerprinting for anti-abuse:  
-
-- All computations rely on **opaque, fused identifiers**  
-- No raw device/browser information is ever persisted in a recoverable form  
-- Identifiers are **irreversible**, ensuring **user privacy is preserved**  
-- Fully auditable design allows verification of behavior **without exposing personal data**  
+- **Opaque fingerprint operation:** privacy-first; inputs cannot be reverse-engineered  
+- **Automated session management:** pruning expired sessions & maintaining concurrency  
+- **Device density and bot heuristics:** prevents abuse without behavioral tracking  
+- **Composable with client telemetry:** designed to accept modular PayOffFP / PayOffFPBridge flows  
 
 ---
 
@@ -184,15 +158,15 @@ Even though this module uses fingerprinting for anti-abuse:
 
 FPJS - FingerprintJS
 
-| Feature | PayOffFP | FPJS OSS | FPJS Enterprise | ThreatMetrix |
-|---------|-----------|----------|----------------|--------------|
-| Deterministic ID | ✔️ | ❌ | ❌ Config | ❌ |
-| Server Verification | ✔️ | ❌ | ❌ | ❌ |
-| Canvas/WebGL/Audio | ✔️ | ✔️ | ✔️ | Partial |
-| Native API Checks | ✔️ | ❌ | ✔️ | ✔️ |
-| Behavioral / ML | ❌ | ✔️ | ✔️ | ✔️ |
-| Privacy-First | ✔️ | ❌ | ❌ | ❌ |
-| Open Source | ✔️ | ✔️ | ❌ | ❌ |
+| Feature | PayOffFP | PayOffFPBridge | FPJS OSS | FPJS Enterprise | ThreatMetrix |
+|---------|-----------|----------------|----------|----------------|--------------|
+| Deterministic ID | ✔️ | ✔️ | ❌ | ❌ Config | ❌ |
+| Server Verification | ✔️ | ✔️ | ❌ | ❌ | ❌ |
+| Canvas/WebGL/Audio | ✔️ | ✔️ | ✔️ | ✔️ | Partial |
+| Native API Checks | ✔️ | ✔️ | ❌ | ✔️ | ✔️ |
+| Behavioral / ML | ❌ | ❌ | ✔️ | ✔️ | ✔️ |
+| Privacy-First | ✔️ | ✔️ | ❌ | ❌ | ❌ |
+| Open Source | ✔️ | ✔️ | ✔️ | ❌ | ❌ |
 
 ---
 
@@ -200,7 +174,7 @@ FPJS - FingerprintJS
 
 - Deterministic & auditable outputs  
 - Modular & standalone  
-- Privacy-first (no behavioral data collection)  
+- Privacy-first (no behavioral data collection; opaque inputs)  
 - Lightweight & high-performance  
 - Extensible for telemetry, PoW, or scoring pipelines  
 
