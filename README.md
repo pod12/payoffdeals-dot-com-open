@@ -78,6 +78,8 @@ const guardian = new PayOffGuardian({
 
 guardian.observe();
 
+```
+
 ---
 
 ## 🛡 PayOffGuardian — Zero-Trust DOM Security (Client)
