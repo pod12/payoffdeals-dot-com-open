@@ -52,6 +52,7 @@ The payoffdeals Toolkit follows a **deterministic, multi-layer pipeline** to pro
 5. **PayOffFPSecurityGateway** – Server-side verification and anti-abuse processing.
 6. **Deterministic Enforcement Engine** – The "brain" of the system. It makes final, rule-based decisions to ensure all security actions are reproducible, auditable, and consistent.
 
+
 **Key Security Benefits**
 
 | Layer | Primary Defense | Mechanism |
@@ -59,6 +60,7 @@ The payoffdeals Toolkit follows a **deterministic, multi-layer pipeline** to pro
 | **Client** | Integrity Monitoring | MutationObserver & Shadow DOM Auditing |
 | **Network** | Request Validation | Service Worker Interception & PoW |
 | **Server** | Abuse Prevention | Deterministic Fingerprinting & Gateway Verification |
+
 
 **Quick Start**
 
@@ -73,7 +75,6 @@ const guardian = new PayOffGuardian({
 guardian.observe();
 
 ```
-
 ---
 
 ## 🛡 PayOffGuardian — Zero-Trust DOM Security (Client)
