@@ -7,25 +7,40 @@
 
 **PayOffDeals** is a next-generation Cashback & Benefits Platform developed by **Data Motifs**, emphasizing **User Privacy and Security**. Beyond the platform itself, we’ve developed **modular software components** that implement **deterministic, auditable, privacy-first designs**, making them available for developers, security engineers, and researchers.  
 
-> Each module stands alone, but they can also be combined into pipelines for verification, scoring, or anti-abuse flows.
+> Each component stands alone, but they can also be combined into pipelines for verification, scoring, or anti-abuse flows.
 
 ---
 
 ## 🧱 Components
 
-### 1. PayOffGuardian — Zero-Trust DOM Security (Client)
-**File:** `pod-guardian.js` | **Version:** v1.0.0 Production Ready  
+| Component | File | Layer | Purpose |
+|-----------|------|-------|---------|
+| **PayOffGuardian** | `pod-guardian.js` | Client | Intelligence Layer: Ultra-hardened client-side DOM & resource security |
+| **PayOffGuardianSW** | `pod-guardian-sw.js` | Service Worker | Execution Layer: Network-level domain revocation |
+| **PayOffFP** | `payoff-fp.js` | Client | Deterministic browser/device fingerprinting |
+| **PayOffFPBridge** | `payoff-fp-bridge.js` | Client | Telemetry bridge to `PayOffFPSecurityGateway` |
+| **PayOffPoW** | `payoff-pow.js` | Client | Memory-hard Proof-of-Work engine |
+| **PayoffAutomaton** | `PayoffAutomaton.java` | Server | Lock-free, density-aware finite state transducer |
+| **FileSocialGraph** | `FileSocialGraph.java` | Server | Persistent file-backed graph engine with REST API |
+| **PayOffFPSecurityGateway** | `PayOffFPSecurityGateway.java` | Server | Server-side verification & anti-abuse engine |
 
-**Purpose:** Ultra-hardened client-side DOM & resource security.
+---
+
+## 🛡 PayOffGuardian — Zero-Trust DOM Security (Client)
+
+**Version:** v1.0.0 Production Ready  
+**File:** `pod-guardian.js`  
+
+**Purpose:** Ultra-hardened client-side DOM & resource security.  
 
 **Key Features:**  
-- Shadow-Piercer: Monitors Light and Shadow DOM roots recursively.  
-- Tiered Inspection: Immediate scanning for high-risk nodes; idle-time scanning for structural nodes.  
-- Critical Violation Alerts: Notifies user on high-risk threats.  
-- Protocol Hardening: Blocks suspicious URI schemes.  
-- Network Revocation: Works with Service Worker for hardware-level blocking.  
-- Learning Mode: Logs violations without blocking traffic.  
-- Runtime Dashboard & Toast Alerts: Shows scanned nodes, blocked violations, and protection state.
+- Shadow-Piercer: Monitors Light and Shadow DOM roots recursively  
+- Tiered Inspection: Immediate scan for high-risk nodes; idle-time scan for structural nodes  
+- Critical Violation Alerts: Notifies on high-risk threats  
+- Protocol Hardening: Blocks suspicious URI schemes (`data:`, `blob:`, `javascript:`)  
+- Network Revocation: Works with `PayOffGuardianSW`  
+- Learning Mode: Logs violations without blocking traffic  
+- Runtime Dashboard & Toast Alerts  
 
 **Novel Approaches / Innovations:**  
 - Hybrid Threading (Main Thread + SW)  
@@ -35,28 +50,28 @@
 
 ---
 
-### 2. PayOffGuardianSW — Network Enforcement Layer (Service Worker)
-**File:** `pod-guardian-sw.js` | **Purpose:** Network-level domain revocation.
+### PayOffGuardianSW — Network Enforcement Layer
 
-**Key Features:**  
-- Receives messages from `PayOffGuardian` to revoke unauthorized domains.  
-- Implements deterministic network control from first page load.  
+**File:** `pod-guardian-sw.js`  
+
+**Purpose:** Network-level domain revocation.  
 
 **Novel Approaches / Innovations:**  
-- Low-latency execution outside the main thread  
-- Complements DOM monitoring with network-level enforcement  
+- Low-latency execution outside main thread  
+- Complements DOM monitoring with network enforcement  
 
 ---
 
-### 3. PayOffFP — Deterministic Fingerprinting (Client)
+### PayOffFP — Deterministic Fingerprinting (Client)
+
 **File:** `payoff-fp.js` | **Version:** v2.8.6 Extended  
 
-**Purpose:** Deterministic browser/device fingerprinting.
-
 **Key Features:**  
-- Canvas, WebGL, Audio context, and Native API checks.  
-- Deterministic fusedId for device verification.  
-- Nonce-bound caching prevents replay attacks.  
+- Canvas/WebGL fingerprint  
+- Audio context fingerprint  
+- Native API integrity checks  
+- Deterministic fusedId  
+- Nonce-bound caching prevents replay attacks  
 
 **Novel Approaches / Innovations:**  
 - Progressive telemetry: partial IDs first, fusedId later  
@@ -65,10 +80,11 @@
 
 ---
 
-### 4. PayOffFPBridge — Client-Side Telemetry Bridge
-**File:** `payoff-fp-bridge.js` | **Version:** v1.5.4 Production Ready  
+### PayOffFPBridge — Client-Side Telemetry Bridge
 
-**Purpose:** Connects `PayOffFP` telemetry to `PayOffFPSecurityGateway`.
+**File:** `payoff-fp-bridge.js` | **Version:** v1.5.4  
+
+**Purpose:** Connects `PayOffFP` telemetry to `PayOffFPSecurityGateway`.  
 
 **Key Features:**  
 - Jittered exponential backoff for resilience  
@@ -83,71 +99,87 @@
 
 ---
 
-### 5. PayOffPoW — Memory-Hard Proof-of-Work Engine (Client)
-**File:** `payoff-pow.js` | **Version:** v7.5.4 “Omni Titan”  
+### PayOffPoW — Memory-Hard Proof-of-Work Engine
+
+**File:** `payoff-pow.js` | **Version:** v7.5.4  
 
 **Key Features:**  
-- Runs in a Web Worker for non-blocking UI  
-- Deterministic SHA-256 state resets prevent ghost collisions  
+- Runs in Web Worker for non-blocking UI  
+- Deterministic SHA-256 state resets  
 - Clock-skew tolerant  
 - Client-side Ed25519 ticket verification  
 
 **Novel Approaches / Innovations:**  
-- Deterministic memory-hard algorithm optimized for constrained devices  
+- Deterministic memory-hard algorithm  
 - Replay-token binding ensures security  
-- Web Worker isolation + progress callbacks for responsive UI  
+- Web Worker isolation + progress callbacks  
 
 ---
 
-### 6. PayoffAutomaton — Adaptive FST (Server)
+### PayoffAutomaton — Adaptive FST (Server)
+
 **File:** `PayoffAutomaton.java`  
 
 **Key Features:**  
 - Structural gravity for dense hub states  
-- Adaptive topology for linear/jump-table lookups  
+- Adaptive topology (linear/jump-table)  
 - Lock-free concurrency and snapshot-safe reads  
 - Cache-friendly encoding  
 
 **Novel Approaches / Innovations:**  
 - Built-in clustering for dense states  
-- Adaptive state promotion based on usage density  
-- Lock-free snapshot reads ensure consistent concurrent access  
+- Adaptive state promotion  
+- Lock-free snapshot reads  
 
 ---
 
-### 7. FileSocialGraph — Persistent Graph Engine (Server)
+### FileSocialGraph — Persistent Graph Engine (Server)
+
 **File:** `FileSocialGraph.java`  
 
 **Key Features:**  
 - File-backed graph storage  
-- REST API for external consumption  
+- REST API  
 - Optimized for concurrency and density-aware updates  
 
 **Novel Approaches / Innovations:**  
 - Persistent, high-integrity graph storage  
-- Efficient snapshot-safe updates for anti-abuse applications  
+- Snapshot-safe concurrent updates  
 
 ---
 
-### 8. PayOffFPSecurityGateway — Server-Side Verification (Server)
-**File:** `PayOffFPSecurityGateway.java` | **Version:** v4.2.8 Gold Standard  
+### PayOffFPSecurityGateway — Server-Side Verification
+
+**File:** `PayOffFPSecurityGateway.java` | **Version:** v4.2.8  
 
 **Key Features:**  
 - Deterministic anti-abuse engine  
 - Operates on opaque fingerprint telemetry  
-- Automated session pruning, HMAC-SHA256 anchoring  
+- Automated session pruning & HMAC-SHA256 anchoring  
 - Device density and network velocity detection  
 
 **Novel Approaches / Innovations:**  
 - Privacy-first: opaque inputs cannot be reverse-engineered  
-- Automated session management with concurrency safety  
+- Automated session management  
 - Composable with client telemetry pipelines  
 
 ---
 
-## 📊 Industry Comparison & Ratings
+## 📊 Fingerprinting Ecosystem Comparison
 
-The payoffdeals Toolkit emphasizes **mathematical certainty and privacy**, unlike large-scale providers relying on ML or PII:  
+| Feature | PayOffFP | PayOffFPBridge | FPJS OSS | FPJS Enterprise | ThreatMetrix |
+|---------|-----------|----------------|-----------|----------------|--------------|
+| Deterministic ID | ✔️ | ✔️ | ❌ | ❌ Config | ❌ |
+| Server Verification | ✔️ | ✔️ | ❌ | ❌ | ❌ |
+| Canvas/WebGL/Audio | ✔️ | ✔️ | ✔️ | ✔️ | Partial |
+| Native API Checks | ✔️ | ✔️ | ❌ | ✔️ | ✔️ |
+| Behavioral / ML | ❌ | ❌ | ✔️ | ✔️ | ✔️ |
+| Privacy-First | ✔️ | ✔️ | ❌ | ❌ | ❌ |
+| Open Source | ✔️ | ✔️ | ✔️ | ❌ | ❌ |
+
+---
+
+## 📊 Industry Comparison & Ratings
 
 | Metric | Industry Giants (Akamai, Cloudflare) | payoffdeals Toolkit | Rating |
 |--------|------------------------------------|-------------------|--------|
@@ -159,24 +191,22 @@ The payoffdeals Toolkit emphasizes **mathematical certainty and privacy**, unlik
 
 ---
 
-## 🎯 Principles
+## 💡 Future Modules & Research Directions
 
-- **Deterministic & Auditable:** Rule-based, reproducible outputs  
-- **Privacy-First:** No behavioral data collection  
-- **High Performance:** Optimized for 60fps UI via async scanning  
-- **Modular & Extensible:** Standalone modules or pipelines  
-- **Novel Approaches Highlighted:** Each module demonstrates innovative design  
+- **PayOffProxyDetect:** Deterministic detection of VPN/proxy usage without centralized Geo-IP databases  
+- **PayOffIntegrity:** Uses Web Integrity API to verify that the browser/environment hasn’t been tampered with  
+
+> Goal: adoption of deterministic, auditable security principles, not monetization.  
 
 ---
 
-## 💡 Future Modules & Research Directions
+## 🎯 Principles
 
-These ideas are intended to guide researchers and developers toward **next-generation privacy-first security modules**:  
-
-- **PayOffProxyDetect:** Deterministic detection of VPN/proxy usage without centralized Geo-IP databases.  
-- **PayOffIntegrity:** Uses Web Integrity API to verify that the browser/environment has not been tampered with (e.g., rooted OS or modified browser).  
-
-> These modules are proposed for research and adoption; the goal is **adoption of deterministic, auditable security principles**, not monetization.  
+- Deterministic & auditable outputs  
+- Modular & standalone  
+- Privacy-first (no behavioral data collection)  
+- Lightweight & high-performance  
+- Novel approaches highlighted in each component  
 
 ---
 
