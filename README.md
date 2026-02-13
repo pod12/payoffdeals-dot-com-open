@@ -11,7 +11,7 @@
 
 ---
 
-## 🧱 Modules
+## 🧱 Components
 
 ### 1. PayOffGuardian — Zero-Trust DOM Security (Client)
 **File:** `pod-guardian.js` | **Version:** v1.0.0 Production Ready  
