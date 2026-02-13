@@ -44,7 +44,7 @@ The payoffdeals Toolkit follows a **deterministic, multi-layer pipeline** to pro
 [ Deterministic Enforcement Engine ]
 ```
 
-** Sample Flow **
+**Sample Flow**
 1. **Browser DOM** – The primary interface and potentially hostile environment we are protecting against unauthorized manipulation.
 2. **PayOffGuardian (Main Thread)** – The front-line observer. It monitors DOM mutations, scrutinizes inline scripts, and audits the **Shadow DOM** for anomalies.
 3. **PayOffGuardianSW (Service Worker)** – Operates at the network level to enforce revocation policies and intercept/block unauthorized outgoing requests before they leave the browser.
@@ -52,9 +52,7 @@ The payoffdeals Toolkit follows a **deterministic, multi-layer pipeline** to pro
 5. **PayOffFPSecurityGateway** – Server-side verification and anti-abuse processing.
 6. **Deterministic Enforcement Engine** – The "brain" of the system. It makes final, rule-based decisions to ensure all security actions are reproducible, auditable, and consistent.
 
----
-
-** Key Security Benefits **
+**Key Security Benefits**
 
 | Layer | Primary Defense | Mechanism |
 | :--- | :--- | :--- |
@@ -62,8 +60,7 @@ The payoffdeals Toolkit follows a **deterministic, multi-layer pipeline** to pro
 | **Network** | Request Validation | Service Worker Interception & PoW |
 | **Server** | Abuse Prevention | Deterministic Fingerprinting & Gateway Verification |
 
-
-** Quick Start **
+**Quick Start**
 
 To initialize the main thread guardian:
 
