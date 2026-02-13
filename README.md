@@ -224,7 +224,7 @@ The payoffdeals Toolkit follows a **deterministic, multi-layer pipeline** to pro
 - **PayOffProxyDetect:** Deterministic detection of VPN/proxy usage without centralized Geo-IP databases  
 - **PayOffIntegrity:** Uses Web Integrity API to verify that the browser/environment hasn’t been tampered with  
 
-> Goal: adoption of deterministic, auditable security principles, not monetization.  
+> Goal: adoption of deterministic, auditable security principles.  
 
 ---
 
