@@ -30,6 +30,7 @@
 
 The payoffdeals Toolkit follows a **deterministic, multi-layer pipeline** to protect applications end-to-end:
 
+```text
 [ Browser DOM ]
         ↓
 [ PayOffGuardian (Main Thread) ]
@@ -41,14 +42,15 @@ The payoffdeals Toolkit follows a **deterministic, multi-layer pipeline** to pro
 [ PayOffFPSecurityGateway ]
         ↓
 [ Deterministic Enforcement Engine ]
+```
 
 **Sample Flow**
-* **Browser DOM** – The primary interface and potentially hostile environment we are protecting against unauthorized manipulation.
-* **PayOffGuardian (Main Thread)** – The front-line observer. It monitors DOM mutations, scrutinizes inline scripts, and audits the **Shadow DOM** for anomalies.
-* **PayOffGuardianSW (Service Worker)** – Operates at the network level to enforce revocation policies and intercept/block unauthorized outgoing requests before they leave the browser.
-* **PayOffFP + PayOffPoW** – A dual-purpose validation layer that generates deterministic device fingerprints and requires memory-hard **Proof-of-Work (PoW)** to authenticate high-value requests.
-* **PayOffFPSecurityGateway** – Server-side verification and anti-abuse processing.
-* **Deterministic Enforcement Engine** – The "brain" of the system. It makes final, rule-based decisions to ensure all security actions are reproducible, auditable, and consistent.
+1. **Browser DOM** – The primary interface and potentially hostile environment we are protecting against unauthorized manipulation.
+2. **PayOffGuardian (Main Thread)** – The front-line observer. It monitors DOM mutations, scrutinizes inline scripts, and audits the **Shadow DOM** for anomalies.
+3. **PayOffGuardianSW (Service Worker)** – Operates at the network level to enforce revocation policies and intercept/block unauthorized outgoing requests before they leave the browser.
+4. **PayOffFP + PayOffPoW** – A dual-purpose validation layer that generates deterministic device fingerprints and requires memory-hard **Proof-of-Work (PoW)** to authenticate high-value requests.
+5. **PayOffFPSecurityGateway** – Server-side verification and anti-abuse processing.
+6. **Deterministic Enforcement Engine** – The "brain" of the system. It makes final, rule-based decisions to ensure all security actions are reproducible, auditable, and consistent.
 
 ---
 
