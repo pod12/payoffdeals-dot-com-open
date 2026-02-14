@@ -95,8 +95,23 @@ The payoffdeals Toolkit follows a **deterministic, multi-layer pipeline** to pro
 - Demonstrates secure inter-tab coordination without hidden logic 
 - ully modular and standalone; compatible with PayOffFP / PayOffGuardian pipelines
 
-**Usage Examples**
+**Security Benefits**
 
+| Layer | Protection | Mechanism |
+|-------|-----------|-----------|
+| Transport | High-speed, memory-only communication | SOP-isolated BroadcastChannel |
+| Trust | Server-verified tab identity | `verifyWithServer()` endpoint ensures only valid leaders broadcast messages |
+| Integrity | Replay prevention | Recent-message cache with timestamps |
+| Stability | DoS / flooding protection | Handshake rate-limiting and per-tab message rate cap |
+| Client Safety | Minimal attack surface | Memory-only bus, no persistent storage of sensitive tokens |
+
+**Pro Tips for Adoption**
+- Session Token Placement: Generate or receive the server token early in the app lifecycle to avoid race conditions.  
+- Rate Limits: Default limits (5–10 messages per tab per second) protect legitimate traffic from accidental flooding.  
+- Extensibility: Can be extended to additional transport layers (e.g., ServiceWorker) if needed.  
+- Open Source Philosophy: Fully transparent; endpoints are placeholders for developer implementation.
+
+**Usage Examples**
 All examples are commented out to ensure safe copy-paste adoption.
 
 ```javascript
