@@ -31,7 +31,7 @@ This repository serves as a **Reference Architecture** for a multi-layered defen
 | **PayoffAutomaton** | `PayoffAutomaton.java` | Server | Lock-free, density-aware finite state transducer |
 | **FileSocialGraph** | `FileSocialGraph.java` | Server | Persistent file-backed graph engine with REST API |
 | **PayOffFPSecurityGateway** | `PayOffFPSecurityGateway.java` | Server | Server-side verification & anti-abuse engine |
-| **CommBridge** | payoff-comm-bridge.js | Client | Secure, server-verified multi-tab communication and replay-safe event bus |
+| **CommBridge** | `payoff-comm-bridge.js` | Client | Secure, server-verified multi-tab communication and replay-safe event bus |
 
 ---
 
