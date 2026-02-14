@@ -73,19 +73,6 @@ The payoffdeals Toolkit follows a **deterministic, multi-layer pipeline** to pro
 | **Network** | Request Validation | Service Worker Interception & PoW |
 | **Server** | Abuse Prevention | Deterministic Fingerprinting & Gateway Verification |
 
-
-**Quick Start**
-
-To initialize the main thread guardian:
-
-```javascript
-const guardian = new PayOffGuardian({
-  mode: 'deterministic',
-  enforceShadowDOM: true
-});
-
-guardian.observe();
-```
 ---
 
 ## 🛡 CommBridge — Secure, Multi-Tab Client Bus
@@ -151,6 +138,18 @@ All examples are commented out to ensure safe copy-paste adoption.
 - Deterministic & Auditable enforcement  
 - Critical Node Prioritization  
 
+**Quick Start**
+
+To initialize the main thread guardian:
+
+```javascript
+const guardian = new PayOffGuardian({
+  mode: 'deterministic',
+  enforceShadowDOM: true
+});
+
+guardian.observe();
+```
 ---
 
 ### PayOffGuardianSW — Network Enforcement Layer
