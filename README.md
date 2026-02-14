@@ -31,6 +31,7 @@ This repository serves as a **Reference Architecture** for a multi-layered defen
 | **PayoffAutomaton** | `PayoffAutomaton.java` | Server | Lock-free, density-aware finite state transducer |
 | **FileSocialGraph** | `FileSocialGraph.java` | Server | Persistent file-backed graph engine with REST API |
 | **PayOffFPSecurityGateway** | `PayOffFPSecurityGateway.java` | Server | Server-side verification & anti-abuse engine |
+| **CommBridge** | payoff-comm-bridge.js | Client | Secure, server-verified multi-tab communication and replay-safe event bus |
 
 ---
 
@@ -46,6 +47,8 @@ The payoffdeals Toolkit follows a **deterministic, multi-layer pipeline** to pro
 [ PayOffGuardianSW (Service Worker) ]
         ↓
 [ PayOffFP + PayOffPoW ]
+        ↓
+[ CommBridge (Multi-Tab Bus) ]
         ↓
 [ PayOffFPSecurityGateway ]
         ↓
@@ -82,6 +85,47 @@ const guardian = new PayOffGuardian({
 });
 
 guardian.observe();
+```
+---
+
+## 🛡 CommBridge — Secure, Multi-Tab Client Bus
+
+**Version:** v1.7.1 
+**File:** `payoff-comm-bridge.js`  
+
+**Purpose:** High-integrity inter-tab communication with server-verified trust, preventing spoofing, replay attacks, and unauthorized tab operations.
+
+**Key Features:**  
+- Hybrid Transport: BroadcastChannel only (memory-only, no localStorage)
+- Leader/Follower Model: Only server-verified "Leader" tabs authorize messages 
+- Session Trust Token: Server-issued key ensures authenticity 
+- Replay Prevention: Timestamp and recent-message cache 
+- Rate Limiting / Handshake Debounce: Prevents accidental or malicious flooding 
+- Once-only Subscriptions: Automatic cleanup after first invocation
+
+**Novel Approaches / Innovations:**  
+- Transparent handshake protocol for establishing trust between tabs
+- Demonstrates secure inter-tab coordination without hidden logic 
+- ully modular and standalone; compatible with PayOffFP / PayOffGuardian pipelines
+
+**Usage Examples**
+
+All examples are commented out to ensure safe copy-paste adoption.
+
+```javascript
+// 1. Listening for secure logout
+// CommBridge.on('AUTH_SYNC', (payload) => {
+//     if (payload.action === 'LOGOUT') window.location.href = '/login';
+// });
+
+// 2. Emitting secure events (from a verified tab)
+// // CommBridge.setVerifiedToken(serverToken); // Must be called once server verifies tab
+// // CommBridge.emit('AUTH_SYNC', { action: 'LOGOUT' });
+
+// 3. One-time handshake
+// CommBridge.once('VERSION_CHECK', (data) => {
+//     console.log('App version received from peer tab:', data.version);
+// });
 ```
 ---
 
