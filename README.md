@@ -93,7 +93,7 @@ The payoffdeals Toolkit follows a **deterministic, multi-layer pipeline** to pro
 **Novel Approaches / Innovations:**  
 - Transparent handshake protocol for establishing trust between tabs
 - Demonstrates secure inter-tab coordination without hidden logic 
-- ully modular and standalone; compatible with PayOffFP / PayOffGuardian pipelines
+- Fully modular and standalone; compatible with PayOffFP / PayOffGuardian pipelines
 
 **Security Benefits**
 
