@@ -27,7 +27,7 @@ And when possible — it is open.
 
 We believe that **Deterministic Security** should be accessible to every developer building for the web.
 
-This repository serves as a **Reference Architecture** for a multi-layered defense-in-depth pipeline. Whether you use the components directly or simply use the logic as a blueprint for your own "build from scratch" journey, this repo aims to provide the community with a high-integrity alternative to traditional, "black-box" solutions.
+This repository serves as a **Reference Architecture** for a zero-trust, multi-layered defense-in-depth pipeline. Whether you use the components directly or simply use the logic as a blueprint for your own "build from scratch" journey, this repo aims to provide the community with a high-integrity alternative to traditional, "black-box" solutions.
 
 ---
 
