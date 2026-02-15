@@ -25,7 +25,7 @@ And when possible — it is open.
 
 ## 💡 Why this repo exists (A Reference Implementation)
 
-High-level client-side security is often hidden behind enterprise paywalls. We believe that **Deterministic Security** should be accessible to every developer building for the web.
+We believe that **Deterministic Security** should be accessible to every developer building for the web.
 
 This repository serves as a **Reference Architecture** for a multi-layered defense-in-depth pipeline. Whether you use the components directly or simply use the logic as a blueprint for your own "build from scratch" journey, this repo aims to provide the community with a high-integrity alternative to traditional, "black-box" solutions.
 
