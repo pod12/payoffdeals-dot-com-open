@@ -12,7 +12,12 @@
  * - No network, file, or destructive operations
  * - No God Seed private keys included
  */
-
+/**
+ * ARCHANGEL-V8 SIMULATOR
+ * Copyright 2026 Data Motifs
+ * * Licensed under the Apache License, Version 2.0; 
+ * you may not use this file except in compliance with the License.
+ */
 // ---------------------------
 // UTILITY: Deep Freeze
 // ---------------------------
