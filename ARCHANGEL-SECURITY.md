@@ -1,48 +1,57 @@
+
+---
+
+### **ARCHANGEL-SECURITY.md**  
+
+```markdown
 # ARCHANGEL-V8 Security Guidelines
 
 ## Purpose
-This document provides guidance for safe use of the ARCHANGEL-V8 simulator module. 
+Guidance for safe usage of ARCHANGEL-V8 simulator module.
 
-ARCHANGEL-V8 demonstrates the architecture of an **immune-bound autonomous agent**, including:
+This module demonstrates an **immune-bound autonomous agent** with:
 
 - DNA verification
-- Heartbeat (mandatory behaviors)
+- Heartbeat / mandatory behaviors
 - Host interrogation / challenge-response
+- Conceptual replication
 
-**Important:** This is a reference **simulation only**. It is not intended for production deployment.
+**Important:** This is a **simulation only**. It is not intended for production deployment.
 
 ---
 
 ## Safety Measures
 
 1. **Training Mode**
-   - All behaviors that could modify the system, perform network requests, or replicate are **simulated only**.
-   - Default behavior logs actions instead of executing them.
+   - All behaviors are simulated (logging only).  
+   - No network, file, or destructive operations.
 
 2. **No God Seed Private Key**
-   - The simulator does **not include any private signing keys**.
+   - The simulator does **not include private signing keys**.  
    - DNA verification is simulated via `simulateVerifySignature`.
 
 3. **Resource Throttle**
-   - Every generation enforces a CPU “tax” to prevent misuse in automated attack scenarios.
+   - CPU-intensive loop enforces a mandatory “tax” per generation.  
+   - Prevents misuse in high-frequency automated attacks.
 
 4. **Replication Concept Only**
-   - Replication is shown as a concept. No actual agent replication occurs.
+   - Replication is **simulated only**; no actual copies are made.  
+   - Controlled via `hostContext.canReplicate`.
 
 5. **Host Challenge**
-   - Host identity checks are simulated.
-   - Prevents replay attacks in theory, but this module does not include real cryptography for challenge responses.
+   - Host identity checks are simulated to prevent replay attacks in theory.  
+   - Training Mode ensures no real cryptography is performed.
 
 ---
 
 ## Ethical Framing
 
-- **Benign Intent:** Demonstrates agent self-protection and integrity verification.
-- **Malicious Mitigation:** CPU throttle and simulated behaviors prevent misuse.
-- **Open-Source Usage:** Safe for study, training, and testing only. Do not deploy this module as a live autonomous agent.
+- **Benign Intent:** Demonstrates autonomous agent self-protection and DNA verification.  
+- **Malicious Mitigation:** CPU throttle and simulation-only behaviors prevent misuse.  
+- **Open-Source Usage:** Safe for study, training, and research. Do **not deploy** as a live autonomous agent.
 
 ---
 
-## Contact / Reporting
+## Reporting Security Issues
 
-If you discover any potential security issues or misuse scenarios, please contact the maintainers to report your findings.
+If you identify potential security concerns or misuse scenarios, please contact maintainers. The module is safe by design, but forks or modifications may introduce risk.
