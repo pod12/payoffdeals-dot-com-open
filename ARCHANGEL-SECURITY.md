@@ -1,9 +1,3 @@
-
----
-
-### **ARCHANGEL-SECURITY.md**  
-
-```markdown
 # ARCHANGEL-V8 Security Guidelines
 
 ## Purpose
