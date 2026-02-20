@@ -79,7 +79,7 @@ import java.util.concurrent.locks.*;
  * - BrainAgent interface for AI-driven policy tuning and migration planning.
  *
  * @param <V> Type of stored values (must be Serializable)
- * Contributors: Me, ChatGPT (OpenAI)and Gemini (Google).
+ * Contributors: User, ChatGPT (OpenAI) and Gemini (Google).
  */
 public class AdaptiveClusterShardKernel<V extends Serializable> {
 
