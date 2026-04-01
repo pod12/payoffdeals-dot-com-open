@@ -9,8 +9,6 @@
 
 Beyond the platform, we open-source the foundational concepts and components behind our security architecture — demonstrating that deterministic, auditable systems do not require black-box dependencies.
 
-This repository is both a toolkit and a statement.
-
 Instead of relying on behavioral profiling, probabilistic risk scoring, or invasive identity verification, our systems are designed around deterministic traceability. Even when a user’s identity is not formally verified, platform events — store visits, benefit issuance, and reward claims — are recorded in a reproducible and auditable manner. Outcomes can be validated, explained, and formally challenged without exposing personal data.
 
 The same zero-trust discipline applies client-side. If a user runs our application, the browser is treated as a potentially adversarial environment. The components in this repository demonstrate how DOM integrity enforcement, network controls, deterministic fingerprinting, proof-of-work validation, and server-side verification can be composed into a cohesive, reproducible pipeline.
