@@ -19,6 +19,8 @@ Trust is not assumed.
 It is engineered.  
 And when possible — it is open.
 
+Note: Code in each file is intentionally kept raw and unstructured to encourage conceptual understanding before adoption, helping to mitigate any future issues.
+
 ---
 
 ## 💡 Why this repo exists (A Reference Implementation)
