@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; font-size: 13px; background: #f9f9f9; }
+    
+    /* Header & Viz */
+    #viz-header { background: #fff; padding: 15px; border-bottom: 1px solid #ddd; display: flex; align-items: center; gap: 15px; }
+    #chart-circle { width: 50px; height: 50px; border-radius: 50%; transition: background 0.3s ease; }
+    
+    /* Master Toggle container in header */
+    .toggle-container { margin-left: auto; text-align: right; }
+    
+    /* Tabs */
+    .tabs { display: flex; background: #222; }
+    .tab { flex: 1; padding: 12px; color: #aaa; text-align: center; cursor: pointer; transition: 0.2s; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .tab.active { color: #fff; border-bottom: 3px solid #2196F3; background: #333; }
+    
+    /* Views */
+    .view { flex: 1; overflow-y: auto; display: none; padding: 10px; }
+    .view.active { display: block; }
+    
+    /* Cards & Lines */
+    .card { background: #fff; border: 1px solid #ddd; padding: 12px; margin-bottom: 8px; border-radius: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .trace-line { font-family: monospace; border-bottom: 1px solid #eee; padding: 4px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 11px; }
+    
+    /* Rules List Styling */
+    .rule-item { display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 8px; border-radius: 4px; margin-bottom: 5px; border-left: 3px solid #2196F3; font-size: 11px; }
+
+    /* Buttons */
+    .allow { background: #28a745; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-weight: bold; }
+    .reject { background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-weight: bold; }
+    .allow:hover { background: #218838; }
+    .reject:hover { background: #c82333; }
+
+    /* Toggle Switch */
+    .switch { position: relative; display: inline-block; width: 34px; height: 20px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 20px; }
+    .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+    input:checked + .slider { background-color: #2196F3; }
+    input:checked + .slider:before { transform: translateX(14px); }
+    #active-rules-list:empty::before {
+    content: "Rules are empty. Allow or Deny any source to destination domain request from Gatekeeper";
+    display: block;
+    padding: 40px 20px;
+    text-align: center;
+    color: #888;
+    font-style: italic;
+	}
+  </style>
+</head>
+<body>
+
+  <div id="viz-header">
+    <div id="chart-circle" style="background: conic-gradient(#28a745 0%, #dc3545 0%);"></div>
+    <div>
+      <div style="font-size: 18px; font-weight: bold;" id="stat-percent">0%</div>
+      <div style="font-size: 12px; color: #666;" id="traffic-label-text">Third-Party Traffic</div>
+    </div>
+    
+    <div class="toggle-container">
+      <label class="switch">
+        <input type="checkbox" id="master-toggle" checked>
+        <span class="slider"></span>
+      </label>
+      <div style="font-size: 9px; color: #666; margin-top: 4px;" id="status-text">Active</div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-target="gatekeeper-view">Gatekeeper</div>
+    <div class="tab" data-target="trace-view">Live Trace</div>
+    <div class="tab" data-target="firewall-view">Firewall</div>
+  </div>
+
+  <div id="gatekeeper-view" class="view active">
+    </div>
+  
+  <div id="trace-view" class="view">
+    </div>
+
+  <div id="firewall-view" class="view">
+    <div style="font-weight: bold; margin-bottom: 10px; color: #333;">Custom Rules</div>
+    <div id="active-rules-list">
+      </div>
+  </div>
+
+  <div style="padding: 12px; border-top: 1px solid #ddd; background: #eee;">
+    <button id="master-reset" style="background: #dc3545; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; font-size: 12px; width: 100%; font-weight: bold;">
+      Reset All Rules & Stats
+    </button>
+  </div>
+
+  <script src="browser-polyfill.min.js"></script>
+  <script src="panel.js"></script>
+</body>
+</html>
