@@ -15,7 +15,7 @@ A dynamic, real-time Chrome Extension for auditing and controlling third-party n
 - **Vanilla JS** (No framework overhead).
 
 ## Installation (Developer Mode)
-1. Clone this repository.
+1. Clone this repository (or download folder).
 2. Open Chrome and navigate to `chrome://extensions/`.
 3. Enable **"Developer mode"** (top right).
 4. Click **"Load unpacked"** and select the extension folder.
