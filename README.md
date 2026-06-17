@@ -5,7 +5,7 @@
 
 ## 📌 Overview
 
-**PayOffDeals** is a next-generation cashback platform with integrated social commerce, prioritizing user privacy and security developed by **Data Motifs**, built on **deterministic, auditable, privacy-first architecture**.
+**PayOffDeals** is a next-generation platform with integrated social commerce, productivity tools and content monetization, prioritizing user privacy and security developed by **Data Motifs**, built on **deterministic, auditable, privacy-first architecture**.
 
 Beyond the platform, we open-source the foundational concepts and components behind our security architecture — demonstrating that deterministic, auditable systems do not require black-box dependencies.
 
@@ -20,6 +20,8 @@ It is engineered.
 And when possible — it is open.
 
 Note: Code in most files is intentionally kept raw and unstructured to encourage conceptual understanding before adoption to help mitigate any future issues
+
+Founder's profile on [PayOffDeals](https://payoffdeals.com/dl/3415542427/profile/raj).
 
 ---
 
