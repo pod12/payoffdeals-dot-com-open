@@ -21,7 +21,7 @@ And when possible — it is open.
 
 Note: Code in most files is intentionally kept raw and unstructured to encourage conceptual understanding before adoption to help mitigate any future issues
 
-Founder's profile on [payoffdeals.com](https://payoffdeals.com/dl/3415542427/profile/raj).
+Founder's profile on [payoffdeals.com](https://payoffdeals.com/dl/3415542427/profile/raj "profile").
 
 ---
 
