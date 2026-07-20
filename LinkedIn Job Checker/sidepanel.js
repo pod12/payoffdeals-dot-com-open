@@ -43,9 +43,36 @@ document.getElementById('saveSettingsBtn').addEventListener('click', async () =>
   }
 });
 
+// --- Reset Button Operational Event Trigger ---
+document.getElementById('resetBtn').addEventListener('click', () => {
+  const resultDiv = document.getElementById('result');
+  
+  // 1. Flush volatile workflow state object
+  JobVerificationWorkflow.state = {};
+  
+  // 2. Clear out view layout container dynamically
+  resultDiv.innerHTML = "";
+  resultDiv.style.display = "none";
+  
+  // 3. Wipe operational runtime credential panel for explicit data protection
+  const authInput = document.getElementById('runtimeMasterPasswordInput');
+  if (authInput) {
+    authInput.value = "";
+  }
+  
+  // 4. Fire baseline view adjustment if available
+  if (UI.showInitialState) {
+    UI.showInitialState();
+  } else {
+    console.log("[Workflow System] Workspace view state restored to default.");
+  }
+});
+
 //--- Main Operational Click Event Trigger ---
 document.getElementById('verifyBtn').addEventListener('click', async () => {
   const resultDiv = document.getElementById('result');
+  
+  resultDiv.style.display = "block";
   UI.showLoading();
 
   const tabs = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
@@ -66,28 +93,46 @@ document.getElementById('verifyBtn').addEventListener('click', async () => {
       return;
     }
 
-    // Fixed execution order sequence to await network trace variables before matching infrastructure
+    // Isolated Domain Tracking Task Block
     const domainMappingPromise = (async () => {
-      await JobVerificationWorkflow.runResolveDomainStage();
-      await JobVerificationWorkflow.runRegistryCheckStage();
-      JobVerificationWorkflow.runInfrastructureStage();
+      try {
+        await JobVerificationWorkflow.runResolveDomainStage();
+        await JobVerificationWorkflow.runRegistryCheckStage();
+        JobVerificationWorkflow.runInfrastructureStage();
+      } catch (domainErr) {
+        console.error("Domain tracking pipeline encountered an error:", domainErr);
+        JobVerificationWorkflow.state.domainError = domainErr.message;
+      }
     })();
 
+    // Isolated Concurrent AI Extraction Task Block
     const aiExtractionPromise = (async () => {
-        // 1. Run the existing legacy key skill extraction
+      try {
+        // 1. Run legacy skill extraction
         JobVerificationWorkflow.state.aiSkills = await AI_CONFIG.extractKeySkills(JobVerificationWorkflow.state.jobDescription);
+      } catch (skillErr) {
+        JobVerificationWorkflow.state.aiSkills = [`❌ Core Extraction Failed: ${skillErr.message}`];
+      }
         
-        // 2. Execute the new AI Content Analysis Sub-Workflow concurrently
+      try {
+        // 2. Run independent content scam auditing
         const companyName = JobVerificationWorkflow.state.companyName || "Unknown Entity";
-        const aiSecurityState = await AIAnalysisSubWorkflow.runAll(
+        await AIAnalysisSubWorkflow.runAll(
           JobVerificationWorkflow.state.jobDescription, 
           companyName
         );
-        
-        // Attach the resulting UI payload straight to our primary workflow state
         JobVerificationWorkflow.state.aiSecurityHtml = AIAnalysisSubWorkflow.renderAiReportHtml();
+      } catch (subWfErr) {
+        JobVerificationWorkflow.state.aiSecurityHtml = `
+          <div style="border-left: 4px solid #d9534f; padding: 8px; margin-top: 12px; background: rgba(0,0,0,0.02); font-family: sans-serif;">
+            <strong style="color:#d9534f;">⚠️ Security Analysis Operational Fault:</strong>
+            <div style="font-size: 0.85rem; margin-top: 2px; color: #555;">${subWfErr.message}</div>
+          </div>
+        `;
+      }
     })();
 
+    // Await execution paths concurrently without premature crash cascading
     await Promise.all([domainMappingPromise, aiExtractionPromise]);
     UI.renderFinalReport(resultDiv, JobVerificationWorkflow.state);
 
@@ -97,5 +142,9 @@ document.getElementById('verifyBtn').addEventListener('click', async () => {
 
   } catch (outerErr) {
     resultDiv.innerHTML = `<div class="status-msg" style="color:#d9534f;">Runtime Error: ${outerErr.message}</div>`;
+  } finally {
+    // Single consolidated decryption password erasure execution point 
+    const authInput = document.getElementById('runtimeMasterPasswordInput');
+    if (authInput) authInput.value = "";
   }
 });

@@ -10,14 +10,12 @@ export const AI_CONFIG = {
     return 'generic-openai-compatible';
   },
 
-  async extractKeySkills(jobDescription) {
-    if (!jobDescription || jobDescription.length < 50) {
-      return ["Could not extract skills: Job description too short or missing."];
-    }
-
-    const systemPrompt = "You are a specialized technical recruiter extraction engine. Analyze the following job description and return ONLY a clean comma-separated list of the top 8 essential hard skills, frameworks, or certifications required. Do not include introductory text or markdown formatting.";
-    const userPrompt = `Job Description:\n${jobDescription.substring(0, 3500)}`;
-
+  /**
+   * Extracted Core Helper: Houses environment checking, credential verification, 
+   * request payload packaging, and cross-provider networking.
+   */
+  async executePrompt(systemPrompt, userPrompt) {
+    // 1. Fallback evaluation for built-in/native browser models
     try {
       const chromeAIEngine = window.ai || (typeof chrome !== 'undefined' && chrome.aiOriginTrial?.languageModel);
       if (chromeAIEngine) {
@@ -26,13 +24,14 @@ export const AI_CONFIG = {
           const session = await chromeAIEngine.create({ systemPrompt: systemPrompt });
           const localResult = await session.prompt(userPrompt);
           session.destroy();
-          return this.cleanSkillsArray(localResult);
+          return localResult;
         }
       }
     } catch (localEngineErr) {
-      console.warn("[AI Orchestrator Stage 1] Native Browser AI error, falling back to cloud...", localEngineErr);
+      console.warn("[AI Orchestrator] Native Browser AI error, falling back to cloud...", localEngineErr);
     }
 
+    // 2. Parse active UI targeting values
     const endpoint = document.getElementById('aiUrlInput').value.trim() || 'https://api.x.ai/v1/chat/completions';
     const modelName = document.getElementById('aiModelInput').value.trim() || 'grok-4.1-fast';
     const runtimePassword = document.getElementById('runtimeMasterPasswordInput').value; 
@@ -44,18 +43,19 @@ export const AI_CONFIG = {
       const storage = await chrome.storage.local.get(['encryptedAiPayload']);
       if (storage.encryptedAiPayload) {
         if (!runtimePassword) {
-          return ["🔑 Access Denied: Please enter your Master Password in the validation field to run verification scans."];
+          throw new Error("🔑 Access Denied: Please enter your Master Password in the validation field.");
         }
         try {
           apiKey = await EphemeralCryptoEngine.decryptKey(storage.encryptedAiPayload, runtimePassword);
         } catch (decryptErr) {
-          return ["❌ Authentication Failure: Master Password is incorrect or storage state integrity was lost."];
+          throw new Error("❌ Authentication Failure: Master Password is incorrect.");
         }
       } else {
-        return ["🔑 Setup Required: No encrypted API Key payload found. Please configure the extension options panel above."];
+        throw new Error("🔑 Setup Required: No encrypted API Key payload found.");
       }
     }
 
+    // 3. Assemble headers & package structural body array
     try {
       let headers = { 'Content-Type': 'application/json' };
       let bodyPayload = {};
@@ -66,7 +66,7 @@ export const AI_CONFIG = {
           headers['anthropic-version'] = '2023-06-01';
           bodyPayload = {
             model: modelName,
-            max_tokens: 200,
+            max_tokens: 1000,
             system: systemPrompt,
             messages: [{ role: 'user', content: userPrompt }]
           };
@@ -100,15 +100,27 @@ export const AI_CONFIG = {
       }
 
       const data = await response.json();
-      let rawResult = provider === 'claude' ? data?.content?.[0]?.text : data?.choices?.[0]?.message?.content;
+      const rawResult = provider === 'claude' ? data?.content?.[0]?.text : data?.choices?.[0]?.message?.content;
+      return rawResult || "";
 
-      return this.cleanSkillsArray(rawResult || "");
-
-    } catch (networkAIErr) {
-      return [`❌ AI Extraction Error: ${networkAIErr.message}.`];
     } finally {
-      apiKey = "";
-      document.getElementById('runtimeMasterPasswordInput').value = "";
+      apiKey = ""; // Safely erase runtime key reference from active memory scope
+    }
+  },
+
+  async extractKeySkills(jobDescription) {
+    if (!jobDescription || jobDescription.length < 50) {
+      return ["Could not extract skills: Job description too short or missing."];
+    }
+
+    const systemPrompt = "You are a specialized technical recruiter extraction engine. Analyze the following job description and return ONLY a clean comma-separated list of the top 8 essential hard skills, frameworks, or certifications required. Do not include introductory text or markdown formatting.";
+    const userPrompt = `Job Description:\n${jobDescription.substring(0, 3500)}`;
+
+    try {
+      const result = await this.executePrompt(systemPrompt, userPrompt);
+      return this.cleanSkillsArray(result);
+    } catch (err) {
+      return [`❌ AI Extraction Error: ${err.message}`];
     }
   },
 

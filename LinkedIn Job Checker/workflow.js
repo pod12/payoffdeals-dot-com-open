@@ -5,6 +5,19 @@ const GLOBAL_ATS_KEYWORDS = [
   "keka.com", "zohorecruit.in"
 ];
 
+// Helper to wait for a specific tab to finish loading via Chrome Events
+const waitForTabComplete = (tabId) => {
+  return new Promise((resolve) => {
+    const listener = (id, changeInfo) => {
+      if (id === tabId && changeInfo.status === 'complete') {
+        chrome.tabs.onUpdated.removeListener(listener);
+        resolve();
+      }
+    };
+    chrome.tabs.onUpdated.addListener(listener);
+  });
+};
+
 export const JobVerificationWorkflow = {
   state: {},
 
@@ -15,7 +28,7 @@ export const JobVerificationWorkflow = {
       routeDetectionType: "Undetermined Link Pipeline", domainToTest: null,
       verificationMethod: "Structural Metadata Extraction", extractedApplyHost: "",
       webResolvedDomain: "", matchesCorporateSite: false, isEasyApply: false,
-      isExternalPortal: false, // Added initialization parameter flag
+      isExternalPortal: false, 
       atsStatusHtml: "", isAtsOrCorporateSite: false, resolvedIpAddress: null,
       securityStatusHtml: `<span style="color: #e67e22;">⚠ Registry verification indeterminate</span>`,
       domainAgeDetails: "Public trace queries could not fetch exact dates.", creationDateStr: null,
@@ -55,7 +68,6 @@ export const JobVerificationWorkflow = {
           for (const link of companyLinks) {
             const href = link.href || '';
             if (href.includes('/company/')) {
-              // Capture layout target company about endpoint link details
               if (!linkedinCompanyAboutUrl) {
                 const baseMatch = href.match(/(https:\/\/www\.linkedin\.com\/company\/[^\/]+)/);
                 if (baseMatch && baseMatch[1]) {
@@ -64,7 +76,6 @@ export const JobVerificationWorkflow = {
                 }
               }
 
-              // Extract text string layout nodes safely if title properties are present
               if ((!companyName || companyName === "Unknown Company") && 
                   (link.innerText.includes('followers') || link.querySelector('img[src*="company-logo"]') || link.innerText.trim().length > 1)) {
                 const textVal = link.innerText.trim();
@@ -253,14 +264,16 @@ export const JobVerificationWorkflow = {
 
     if (this.state.linkedinCompanyAboutUrl) {
       try {
-        this.log(`[4] Spawning automated background runner to process verified LinkedIn configuration: ${this.state.linkedinCompanyAboutUrl}`);
+        this.log(`[4] Spawning automated background tab to verify corporate configuration: ${this.state.linkedinCompanyAboutUrl}`);
         
         const aboutTab = await chrome.tabs.create({
           url: this.state.linkedinCompanyAboutUrl,
           active: false
         });
 
-        await new Promise(resolve => setTimeout(resolve, 4000));
+        // FIX 1: Eliminated dangerous 4000ms timeout race-condition. 
+        // Extension now dynamically reacts exactly when the DOM hits a finalized complete network state.
+        await waitForTabComplete(aboutTab.id);
 
         const scrapedMeta = await chrome.scripting.executeScript({
           target: { tabId: aboutTab.id },
@@ -347,14 +360,18 @@ export const JobVerificationWorkflow = {
       } catch(e) {}
     }
 
+    // FIX 2: Dropped the fragile third-party corsproxy.io wrapper. 
+    // Uses DuckDuckGo's raw HTML interface directly (allowed inside Extension Manifest V3 Background contexts).
     if (!this.state.domainToTest && !this.state.webResolvedDomain && this.state.companyName !== "Unknown Company") {
       try {
-        const searchUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(this.state.companyName)}`;
-        const searchCheck = await fetch(`https://corsproxy.io/?url=${encodeURIComponent(searchUrl)}`);
+        const searchUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(this.state.state.companyName)}`;
+        const searchCheck = await fetch(searchUrl, { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' } });
         const searchHtml = await searchCheck.text();
         const urlMatch = searchHtml.match(/class="result__url"[^>]*>\s*([^<\s]+)/);
         if (urlMatch) this.state.webResolvedDomain = new URL('https://' + urlMatch[1].trim()).hostname.replace('www.', '');
-      } catch (e) {}
+      } catch (e) {
+        this.log(`[Domain Fallback Alert] Direct search fallback aborted or blocked.`);
+      }
     }
 
     if (this.state.webResolvedDomain && this.state.extractedApplyHost) {
@@ -363,7 +380,6 @@ export const JobVerificationWorkflow = {
 
     const isAtsLink = this.state.extractedApplyHost && GLOBAL_ATS_KEYWORDS.some(ats => this.state.extractedApplyHost.includes(ats));
     
-    // Evaluate if this is an external job aggregator channel/portal ecosystem
     this.state.isExternalPortal = this.state.extractedApplyHost && 
                                   !this.state.matchesCorporateSite && 
                                   !isAtsLink && 
@@ -379,65 +395,56 @@ export const JobVerificationWorkflow = {
   },
 
   runInfrastructureStage() {
-	    const isRecentDomain = (this.state.securityStatusHtml || '').includes('CRITICAL');
+    const isRecentDomain = (this.state.securityStatusHtml || '').includes('CRITICAL');
 
-	    // Helper to generate a scannable footprint list of your whitelisted infrastructure strings
-	    const getAtsInventoryFooter = () => {
-	      if (!GLOBAL_ATS_KEYWORDS || !GLOBAL_ATS_KEYWORDS.length) return '';
-	      const formattedList = GLOBAL_ATS_KEYWORDS.map(ats => `<code>${ats}</code>`).join(', ');
-	      return `<br><div class="ats-inventory" style="margin-top: 8px; font-size: 1.5em; opacity: 0.8;">ℹ️ <strong>Approved Infrastructure Boundaries:</strong> ${formattedList}</div>`;
-	    };
+    const getAtsInventoryFooter = () => {
+      if (!GLOBAL_ATS_KEYWORDS || !GLOBAL_ATS_KEYWORDS.length) return '';
+      const formattedList = GLOBAL_ATS_KEYWORDS.map(ats => `<code>${ats}</code>`).join(', ');
+      return `<br><div class="ats-inventory" style="margin-top: 8px; font-size: 1.5em; opacity: 0.8;">ℹ️ <strong>Approved Infrastructure Boundaries:</strong> ${formattedList}</div>`;
+    };
 
-	    // 1. Easy Apply Scope
-	    if (this.state.isEasyApply) {
-	      if (!this.state.webResolvedDomain) {
-	        this.state.atsStatusHtml = `❌ HIGH RISK Easy Apply Channel: No verifiable business footprints found.`;
-	        this.state.isAtsOrCorporateSite = false;
-	      } else if (isRecentDomain) {
-	        this.state.atsStatusHtml = `❌ CRITICAL RISK Easy Apply: Profile links to a recently registered domain footprint (<strong>${this.state.webResolvedDomain}</strong>). Potential lookalike trap.`;
-	        this.state.isAtsOrCorporateSite = false;
-	      } else {
-	        this.state.atsStatusHtml = `✓ Verified Easy Apply: Secure alignment with established footprint (<strong>${this.state.webResolvedDomain}</strong>).`;
-	        this.state.isAtsOrCorporateSite = true;
-	      }
-	      return;
-	    }
+    if (this.state.isEasyApply) {
+      if (!this.state.webResolvedDomain) {
+        this.state.atsStatusHtml = `❌ HIGH RISK Easy Apply Channel: No verifiable business footprints found.`;
+        this.state.isAtsOrCorporateSite = false;
+      } else if (isRecentDomain) {
+        this.state.atsStatusHtml = `❌ CRITICAL RISK Easy Apply: Profile links to a recently registered domain footprint (<strong>${this.state.webResolvedDomain}</strong>). Potential lookalike trap.`;
+        this.state.isAtsOrCorporateSite = false;
+      } else {
+        this.state.atsStatusHtml = `✓ Verified Easy Apply: Secure alignment with established footprint (<strong>${this.state.webResolvedDomain}</strong>).`;
+        this.state.isAtsOrCorporateSite = true;
+      }
+      return;
+    }
 
-	    const matchesAts = GLOBAL_ATS_KEYWORDS.some(ats => this.state.extractedApplyHost.includes(ats));
-	    
-	    // Strict Corporate Identity Check: Does the target host align structurally with the verified company domain?
-	    const targetMatchesCorporate = this.state.domainToTest && 
-	      (this.state.extractedApplyHost.includes(this.state.domainToTest) || 
-	       this.state.domainToTest.includes(this.state.extractedApplyHost));
+    const matchesAts = GLOBAL_ATS_KEYWORDS.some(ats => this.state.extractedApplyHost.includes(ats));
+    
+    const targetMatchesCorporate = this.state.domainToTest && 
+      (this.state.extractedApplyHost.includes(this.state.domainToTest) || 
+       this.state.domainToTest.includes(this.state.extractedApplyHost));
 
-	    // 2. Direct recognized Enterprise Tracker
-	    if (matchesAts) {
-	      this.state.atsStatusHtml = `✓ Verified Infrastructure: Enterprise Tracker (<strong>${this.state.extractedApplyHost}</strong>).` + getAtsInventoryFooter();
-	      this.state.isAtsOrCorporateSite = true;
-	      
-	    // 3. Direct Match with Corporate Domain (Mitigated by Domain Age)
-	    } else if (targetMatchesCorporate || this.state.matchesCorporateSite) {
-	      if (isRecentDomain) {
-	        this.state.atsStatusHtml = `❌ CRITICAL INFRASTRUCTURE ALERT: Target routes to a matched company name domain, but the registration is brand new (<strong>${this.state.extractedApplyHost}</strong>). High probability spoofing attempt!`;
-	        this.state.isAtsOrCorporateSite = false;
-	      } else {
-	        this.state.atsStatusHtml = `✓ Verified Corporate Domain: Environment Match (<strong>${this.state.extractedApplyHost}</strong>).`;
-	        this.state.isAtsOrCorporateSite = true;
-	      }
-	      
-	    // 4. Zero-Trust Fallback: Catch outbound data-harvesting / masking behavior
-	    } else {
-	      // Dynamic warning containing the host structural failure alongside the system rules overview
-	      this.state.atsStatusHtml = `❌ HIGH RISK Pipeline: Form routes out to an unverified external channel (<strong>${this.state.extractedApplyHost}</strong>). Identity boundary check failed.` + getAtsInventoryFooter();
-	      this.state.isAtsOrCorporateSite = false; 
-	    }
-	  },
+    if (matchesAts) {
+      this.state.atsStatusHtml = `✓ Verified Infrastructure: Enterprise Tracker (<strong>${this.state.extractedApplyHost}</strong>).` + getAtsInventoryFooter();
+      this.state.isAtsOrCorporateSite = true;
+    } else if (targetMatchesCorporate || this.state.matchesCorporateSite) {
+      if (isRecentDomain) {
+        this.state.atsStatusHtml = `❌ CRITICAL INFRASTRUCTURE ALERT: Target routes to a matched company name domain, but the registration is brand new (<strong>${this.state.extractedApplyHost}</strong>). High probability spoofing attempt!`;
+        this.state.isAtsOrCorporateSite = false;
+      } else {
+        this.state.atsStatusHtml = `✓ Verified Corporate Domain: Environment Match (<strong>${this.state.extractedApplyHost}</strong>).`;
+        this.state.isAtsOrCorporateSite = true;
+      }
+    } else {
+      this.state.atsStatusHtml = `❌ HIGH RISK Pipeline: Form routes out to an unverified external channel (<strong>${this.state.extractedApplyHost}</strong>). Identity boundary check failed.` + getAtsInventoryFooter();
+      this.state.isAtsOrCorporateSite = false; 
+    }
+  },
 
   async runRegistryCheckStage() {
     if (!this.state.domainToTest) return;
     try {
       const dnsQuery = await fetch(`https://dns.google/resolve?name=${encodeURIComponent(this.state.domainToTest)}&type=A`);
-      const dnsData = await dnsQuery.dnsData || await dnsQuery.json();
+      const dnsData = await dnsQuery.json();
       if (dnsData?.Answer?.[0]?.data) this.state.resolvedIpAddress = dnsData.Answer[0].data;
     } catch(e) {}
 
@@ -449,9 +456,14 @@ export const JobVerificationWorkflow = {
 
       if (creationDate) {
         this.state.creationDateStr = creationDate.substring(0, 10);
-        const age = new Date().getFullYear() - new Date(creationDate).getFullYear();
-        this.state.domainAgeDetails = `<strong>Domain Checked:</strong> <code>${this.state.domainToTest}</code><br><strong>Age:</strong> ${age} years old`;
-        this.state.securityStatusHtml = age <= 1 ? `❌ CRITICAL SECURITY WARNING: Registered recently.` : `✓ Established Network Domain.`;
+        
+        // FIX 3: Solved the "Calendar boundary math error." 
+        // Replaced year subtraction with real fractional millennial age analysis using actual elapsed milliseconds.
+        const msDiff = Date.now() - new Date(creationDate).getTime();
+        const ageInYears = msDiff / (1000 * 60 * 60 * 24 * 365.25); 
+
+        this.state.domainAgeDetails = `<strong>Domain Checked:</strong> <code>${this.state.domainToTest}</code><br><strong>Age:</strong> ${ageInYears.toFixed(2)} years old`;
+        this.state.securityStatusHtml = ageInYears <= 1.0 ? `❌ CRITICAL SECURITY WARNING: Registered recently.` : `✓ Established Network Domain.`;
       } else throw new Error();
     } catch (e) {
       await this.runWhoisFallbackStage();
@@ -460,15 +472,18 @@ export const JobVerificationWorkflow = {
 
   async runWhoisFallbackStage() {
     try {
+      // FIX 2.1: Removed CORS proxy workaround here too. Extensions can fetch to target registration repositories directly.
       const targetQueryUrl = `https://www.whois.com/whois/${encodeURIComponent(this.state.domainToTest)}`;
-      const res = await fetch(`https://corsproxy.io/?url=${encodeURIComponent(targetQueryUrl)}`);
+      const res = await fetch(targetQueryUrl);
       const html = await res.text();
       const match = html.match(/Creation Date:\s*([^\n\r<]+)/i) || html.match(/Registered On:\s*([^\n\r<]+)/i);
       
       if (match) {
-        const age = new Date().getFullYear() - new Date(match[1].trim()).getFullYear();
+        const creationTimestamp = new Date(match[1].trim()).getTime();
+        const ageInYears = (Date.now() - creationTimestamp) / (1000 * 60 * 60 * 24 * 365.25);
+
         this.state.domainAgeDetails = `<strong>Domain Checked:</strong> <code>${this.state.domainToTest}</code><br><strong>Created:</strong> ${match[1].trim()}`;
-        this.state.securityStatusHtml = age <= 1 ? `❌ CRITICAL WARNING: Domain is recent.` : `✓ Established Footprint (Fallback Verified).`;
+        this.state.securityStatusHtml = ageInYears <= 1.0 ? `❌ CRITICAL WARNING: Domain is recent.` : `✓ Established Footprint (Fallback Verified).`;
       }
     } catch (e) {
       this.state.domainAgeDetails = `<strong>Domain Target:</strong> <code>${this.state.domainToTest}</code><br><span style="color:#777;">Traces timed out.</span>`;
